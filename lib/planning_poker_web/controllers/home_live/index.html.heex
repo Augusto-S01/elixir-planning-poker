@@ -1,4 +1,5 @@
 <main class="flex flex-col items-center justify-center h-screen bg-gray-100">
+  <.room_config_modal show?={@show_room_config} deck={"tshirt"} />
   <div class="text-center">
     <h1 class="text-4xl font-bold mb-4">Welcome to Planning Poker</h1>
     <p class="text-lg mb-8">A collaborative tool for agile estimation.</p>
@@ -8,10 +9,10 @@
   </div>
   <div class="mt-12">
     <p class="text-gray-600 text-center" >Or</p>
-    <input type="text" placeholder="Enter Session ID" class="border border-gray-300 rounded px-4 py-2 w-64 mb-4">
-    <button phx-click="go_to_room" class="bg-green-500 text-white px-6 py-3 rounded hover:bg-green-600 transition">
-      Join Session
-    </button>
+    <form phx-submit="go_to_room">
+      <input type="text" name="room_code" class="border border-gray-300 rounded px-4 py-2 w-64 mb-4" placeholder="Digite o código da sala" />
+      <button type="submit" class="bg-green-500 text-white px-6 py-3 rounded hover:bg-green-600 transition">Entrar</button>
+    </form>
   </div>
   <footer class="mt-12 text-gray-500 text-sm">
     <p>&copy; 2025 Planning Poker. All rights reserved.</p>

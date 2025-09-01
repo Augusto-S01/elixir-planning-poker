@@ -1,0 +1,20 @@
+<div :if={@show?}
+     id="modal"
+     class="fixed inset-0 flex items-center justify-center bg-black/50 z-50"
+     phx-click={@on_close}>
+  <div class="bg-white p-6 rounded shadow-lg" phx-click="ignore">
+    <form phx-submit={@on_save}>
+      <h2 class="text-2xl mb-4">Configurações da Sala</h2>
+      <div class="mb-4">
+        <label class="block mb-2">Tipo de baralho</label>
+        <select name="deck" class="w-full border rounded p-2">
+          <option selected={@deck == "fibonacci"} value="fibonacci">Fibonacci</option>
+          <option selected={@deck == "tshirt"} value="tshirt">T-Shirt Sizes</option>
+          <option selected={@deck == "custom"} value="custom">Custom</option>
+        </select>
+      </div>
+      <button type="submit" class="mt-2 px-4 py-2 bg-blue-600 text-white rounded">Salvar</button>
+    </form>
+    <button phx-click={@on_close} class="mt-4 px-4 py-2 bg-gray-200 rounded">Fechar</button>
+  </div>
+</div>

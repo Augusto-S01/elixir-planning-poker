@@ -9,6 +9,5 @@ defmodule PlanningPoker.Room do
 
   def initialize_room(deck) do
     %PlanningPoker.Room{deck: deck, players: [], round: 1}
-
   end
 end

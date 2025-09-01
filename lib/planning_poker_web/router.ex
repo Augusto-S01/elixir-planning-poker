@@ -20,7 +20,7 @@ defmodule PlanningPokerWeb.Router do
 
     live "/", HomeLive.Index, :home
 
-    live "/room/:code" , RoomLive.Index, :room
+    live "/room/:code", RoomLive.Index, :room
 
   end
 
