@@ -1,16 +1,34 @@
-defmodule PlanningPokerWeb.RoomConfigModal do
-  use PlanningPokerWeb, :html
+defmodule PlanningPokerWeb.RoomConfigModalComponent do
+  use PlanningPokerWeb, :live_component
 
-  attr :show?, :boolean, required: true
-  attr :deck, :string, default: "fibonacci"
-  attr :on_close, :any, default: "close_room_config"
-  attr :on_save, :any, default: "save_room_config"
-  # wrapper que recebe attrs e chama o template embutido
-  def room_config_modal(assigns) do
-    room_config_modal_html(assigns)
+  # props vindas do pai
+  # show?: controla visibilidade; deck: valor inicial (edição)
+  @impl true
+  def update(%{show?: show?, deck: deck} = assigns, socket) do
+    socket =
+      socket
+      |> assign_new(:deck, fn -> deck || "fibonacci" end) # estado interno com default
+      |> assign(show?: show?)
+
+    {:ok, assign(socket, assigns)}
   end
-  # procura por room_config_modal/*.heex OU pelo arquivo nesta pasta
+
+  @impl true
+  def handle_event("ignore", _params, socket) do
+    {:noreply, socket}
+  end
+
+  @impl true
+  def handle_event("close_room_config", _params, socket) do
+    {:noreply, assign(socket, show?: false)}
+  end
+
+  @impl true
+  def handle_event("save_room_config", %{"deck" => deck}, socket) do
+    # aqui você valida/persist e notifica o pai
+    send(self(), {:room_config_saved, %{deck: deck}})
+    {:noreply, assign(socket, deck: deck, show?: false)}
+  end
+
   embed_templates "*"
-  # se o .heex estiver na mesma pasta do .ex, você pode usar:
-  # embed_templates "*"
 end

@@ -1,5 +1,10 @@
 <main class="flex flex-col items-center justify-center h-screen bg-gray-100">
-  <.room_config_modal show?={@show_room_config} deck={"tshirt"} />
+  <.live_component
+    module={PlanningPokerWeb.RoomConfigModalComponent}
+    id="room-config"               
+    show?={@show_room_config}
+    deck={@deck}                   
+  />
   <div class="text-center">
     <h1 class="text-4xl font-bold mb-4">Welcome to Planning Poker</h1>
     <p class="text-lg mb-8">A collaborative tool for agile estimation.</p>

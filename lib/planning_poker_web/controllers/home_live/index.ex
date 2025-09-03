@@ -1,11 +1,14 @@
 defmodule PlanningPokerWeb.HomeLive.Index do
   use PlanningPokerWeb, :live_view
-  import PlanningPokerWeb.RoomConfigModal
-
 
   def mount(_params, _session, socket) do
-    socket = assign(socket, show_room_config: false)
-    {:ok, assign(socket, room_code: "")}
+    socket = socket
+    |> assign(show_room_config: false)
+    |> assign(deck: "fibonacci")
+    |> assign(room_code: "")
+
+
+    {:ok, socket}
   end
 
   def handle_event("start_new_session", _, socket) do
@@ -30,6 +33,17 @@ defmodule PlanningPokerWeb.HomeLive.Index do
 
   def handle_event("ignore", _, socket) do
     {:noreply, socket}
+  end
+
+  def handle_event("teste",_,socket) do
+    IO.inspect("teste")
+    {:noreply, socket}
+  end
+
+  @impl true
+  def handle_info({:room_config_saved, %{deck: deck}}, socket) do
+    # aqui você decide: salvar no DB, iniciar sessão, etc.
+    {:noreply, assign(socket, deck: deck, show_room_config: false)}
   end
 
   defp get_code do
