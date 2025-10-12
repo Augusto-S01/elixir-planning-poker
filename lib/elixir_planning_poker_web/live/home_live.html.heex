@@ -1,0 +1,55 @@
+<main class="flex min-h-screen flex-col items-center justify-center p-24">
+ <div class="bg-neutral text-neutral-content rounded-lg p-5 transition-colors duration-300 text-center">
+    <Icon.icon name="naipe" class="w-16 h-16 " />
+  </div>
+  <h1 class="mt-6 text-4xl font-bold text-center text-base-content">Planning Poker</h1>
+    <p class="mt-4 text-lg text-center text-base-content">Agile Estimation in a simple and collaborative way</p>
+
+    <div class="
+    mt-10 text-center space-y-4 
+    sm:space-y-0 sm:space-x-6 border border-base-300
+    p-6 rounded-lg bg-base-200 text-base-content
+    shadow-lg w-full max-w-md
+    lg:max-w-lg xl:max-w-xl 2xl:max-w-2xl
+    "  
+    >
+      <h2>Welcome </h2>
+      <p> create a new room or join an existing one</p>
+      <.swiper
+        left_label="Create room"
+        left_icon="hashtag_icon"
+        right_label="Entrar com Código"
+        right_icon="people_icon"
+        selected={@selected_mode}
+      />
+        <%= if @selected_mode == :left do %>
+        <div class="mt-6 flex items-center justify-center space-x-2 flex-col border bg-base-300 border-base-300 p-4 rounded-lg">
+            <Icon.icon name="people_icon" class="w-12 h-12 inline-block mr-2" />
+            <span class="text-lg mb-4">Create a new Room</span>
+            <p class="text-sm mb-3">Start a planning poker session and share the code with your team</p>
+            <button class="btn btn-primary" phx-click="create_room">Create room</button>
+
+        </div>
+        <% else %>
+        <div class="mt-6">
+            <label for="room_code" class="block text-sm font-medium mb-2">Enter Room Code</label>
+            <input id="room_code" type="text" placeholder="ABC123" class="input input-bordered w-full max-w-xs" />
+            <button class="btn btn-primary mt-4 w-full max-w-xs">Join Room</button>
+            <hr class="my-4" />
+            <div class="text-sm text-center text-base-content">
+              <p>Don't have a room code? Ask your organizer for it.</p>
+            </div>
+        </div>
+        <% end %>
+      </div>
+</main>
+
+<%= if @show_modal do %>
+  <.room_config_modal form={@form} />
+<% end %>
+
+
+<Layouts.theme_toggle />
+<div class="color-base-300 color-primary">
+<Icon.icon name="naipe" class="w-8 h-8" />
+</div>
