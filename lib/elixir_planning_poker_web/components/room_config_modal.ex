@@ -11,7 +11,7 @@ defmodule ElixirPlanningPokerWeb.Components.RoomConfigModal do
       <div class="modal-box max-w-3xl">
         <h3 class="font-bold text-lg mb-4">Room Configuration</h3>
 
-        <.form for={@form} phx-change="validate" phx-submit="save" class="space-y-4">
+        <.form for={@form} phx-change="validate" phx-submit="submit" class="space-y-4">
           <div>
             <label for="room_name" class="block text-sm font-medium mb-2">
               Room Name
@@ -23,9 +23,9 @@ defmodule ElixirPlanningPokerWeb.Components.RoomConfigModal do
             </label>
             <select value={@form[:deck_type].value} name="room[deck_type]" id="room_deck_type" class="select select-bordered w-full">
 
-              <option value="fibonacci" selected={@form[:deck_type].value == "fibonacci"}>Fibonacci</option>
-              <option value="tshirt" selected={@form[:deck_type].value == "tshirt"}>T-Shirt Sizes</option>
-              <option value="sequential" selected={@form[:deck_type].value == "sequential"}>Sequential Numbers</option>
+              <option value="fibonacci" selected={@form[:deck_type].value == "fibonacci"}>Fibonacci (0, 1/2, 1, 2, 3, 5, 8, ...)</option>
+              <option value="tshirt" selected={@form[:deck_type].value == "tshirt"}>T-Shirt Sizes (XS, S, M, L, XL)</option>
+              <option value="sequential" selected={@form[:deck_type].value == "sequential"}>Sequential Numbers (1, 2, 3, ...)</option>
               <option value="custom" selected={@form[:deck_type].value == "custom"}>Custom</option>
             </select>
 

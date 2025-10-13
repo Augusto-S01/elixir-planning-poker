@@ -5,6 +5,7 @@ defmodule ElixirPlanningPokerWeb.HomeLive do
   import ElixirPlanningPokerWeb.Components.RoomConfigModal
   alias ElixirPlanningPokerWeb.Components.Icon
 
+
   def mount(_params, _session, socket) do
     {:ok,
      socket
@@ -32,16 +33,28 @@ defmodule ElixirPlanningPokerWeb.HomeLive do
   end
 
   def handle_event("validate", %{"room" => room_params}, socket) do
-  IO.inspect(room_params, label: "Validating form with room_params")
-  form = to_form(room_params, as: :room)
-  IO.inspect(form, label: "Form after validation")
+    form = to_form(room_params, as: :room)
+    {:noreply, assign(socket, :form, form)}
+  end
 
-  {:noreply, assign(socket, :form, form)}
-end
+  def handle_event("submit", %{"room" => params}, socket) do
+    atomized =
+    for {k, v} <- params, into: %{} do
+      {String.to_atom(k), v}
+    end
+    {room_status , room_pid} = ElixirPlanningPoker.Room.start_link(atomized)
+    IO.inspect(room_status, label: "Room start status")
+    IO.inspect(room_pid, label: "Room PID")
 
-  def handle_event("save", %{"room" => params}, socket) do
-    IO.inspect(params, label: "Room config submitted")
-    {:noreply, assign(socket, :show_modal, false)}
+    room_state = ElixirPlanningPoker.Room.get_state(room_pid)
+    IO.inspect(room_state, label: "Room state after creation")
+    room_code = room_state.room_code
+    IO.inspect(room_code, label: "Room code after creation")
+
+    {:noreply,
+    socket
+    |> push_navigate(to: ~p"/rooms/#{room_code}")}
+
   end
 
 end
