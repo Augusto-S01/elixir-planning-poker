@@ -42,15 +42,9 @@ defmodule ElixirPlanningPokerWeb.HomeLive do
     for {k, v} <- params, into: %{} do
       {String.to_atom(k), v}
     end
-    {room_status , room_pid} = ElixirPlanningPoker.Room.start_link(atomized)
-    IO.inspect(room_status, label: "Room start status")
-    IO.inspect(room_pid, label: "Room PID")
-
+    {_ , room_pid} = ElixirPlanningPoker.Room.start_link(atomized)
     room_state = ElixirPlanningPoker.Room.get_state(room_pid)
-    IO.inspect(room_state, label: "Room state after creation")
     room_code = room_state.room_code
-    IO.inspect(room_code, label: "Room code after creation")
-
     {:noreply,
     socket
     |> push_navigate(to: ~p"/rooms/#{room_code}")}

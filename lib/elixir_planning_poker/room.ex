@@ -6,18 +6,24 @@ defmodule ElixirPlanningPoker.Room do
 
   # Client API
   def start_link(opts) do
-    room_code = opts[:room_code] || generate_room_code()
-    IO.inspect(room_code, label: "Generated room code")
+    {:ok, pid} = GenServer.start_link(__MODULE__, opts)
+    ElixirPlanningPoker.RoomManager.add_room(pid)
+    IO.inspect(pid, label: "Started Room with PID")
+    {:ok, pid}
+  end
 
-    opts = Map.put(opts, :room_code, room_code)
-    GenServer.start_link(__MODULE__, opts, name: String.to_atom(room_code))
+  def get_state(pid) do
+    GenServer.call(pid, :get_state)
+  end
+
+  # server callbacks
+  @impl true
+  def handle_call(:get_state, _from, state) do
+    {:reply, state, state}
   end
 
   @impl true
   def init(opts) do
-    IO.inspect(opts, label: "Room init options")
-    IO.inspect(opts[:name], label: "Room name option")
-    IO.inspect(Map.get(opts, :name), label: "Room name from Map.get")
     room = %__MODULE__{
       name: opts[:name] || "New Room",
       deck_type: opts[:deck_type] || "fibonacci",
@@ -27,7 +33,7 @@ defmodule ElixirPlanningPoker.Room do
       current_story: nil,
       state: :waiting,
       cards: get_cards_from_deck(opts[:deck_type], opts[:custom_deck]),
-      room_code: opts[:room_code]
+      room_code: opts[:room_code] || generate_room_code()
     }
     {:ok, room}
   end
@@ -45,20 +51,5 @@ defmodule ElixirPlanningPoker.Room do
   defp generate_room_code do
     :crypto.strong_rand_bytes(3) |> Base.url_encode64() |> binary_part(0, 4)
   end
-
-  def get_state(pid) do
-    GenServer.call(pid, :get_state)
-  end
-
-  # server callbacks
-  @impl true
-  def handle_call(:get_state, _from, state) do
-    {:reply, state, state}
-  end
-
-
-
-
-
 
 end
