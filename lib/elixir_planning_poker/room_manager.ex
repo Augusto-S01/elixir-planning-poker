@@ -15,7 +15,20 @@ defmodule ElixirPlanningPoker.RoomManager do
   def get_rooms() do
     GenServer.call(__MODULE__, :get_rooms)
   end
+
+  def get_state(room_code) do
+    GenServer.call(__MODULE__, {:get_state, room_code})
+  end
+
   # Server Callbacks
+  @impl true
+  def handle_call({:get_state, room_code}, _from, state) do
+    IO.inspect(state, label: "RoomManager state")
+    room_pid = Enum.find(Map.keys(state), fn pid -> Map.get(state, pid) == room_code end)
+    room_state = ElixirPlanningPoker.Room.get_state(room_pid)
+    {:reply, room_state, state}
+  end
+
   @impl true
   def handle_call(:get_rooms, _from, state) do
     {:reply, Map.keys(state), state}

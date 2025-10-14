@@ -28,7 +28,7 @@ defmodule ElixirPlanningPoker.Room do
       name: opts[:name] || "New Room",
       deck_type: opts[:deck_type] || "fibonacci",
       custom_deck: opts[:custom_deck] || "",
-      users: %{},
+      users: opts[:users] || %{},
       stories: [],
       current_story: nil,
       state: :waiting,

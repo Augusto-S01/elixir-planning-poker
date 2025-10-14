@@ -1,4 +1,6 @@
 defmodule ElixirPlanningPokerWeb.Router do
+
+
   use ElixirPlanningPokerWeb, :router
 
   pipeline :browser do
@@ -7,6 +9,7 @@ defmodule ElixirPlanningPokerWeb.Router do
     plug :fetch_live_flash
     plug :put_root_layout, html: {ElixirPlanningPokerWeb.Layouts, :root}
     plug :protect_from_forgery
+    plug ElixirPlanningPokerWeb.Plugs.EnsureUserToken
     plug :put_secure_browser_headers
   end
 
@@ -18,7 +21,7 @@ defmodule ElixirPlanningPokerWeb.Router do
     pipe_through :browser
 
     live "/", HomeLive, :index
-    live "/rooms/:id",  RoomLive, :room
+    live "/rooms/:room_code",  RoomLive, :room
   end
 
   # Other scopes may use custom stacks.

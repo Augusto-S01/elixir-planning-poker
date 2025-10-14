@@ -6,9 +6,12 @@ defmodule ElixirPlanningPokerWeb.HomeLive do
   alias ElixirPlanningPokerWeb.Components.Icon
 
 
-  def mount(_params, _session, socket) do
+  def mount(_params, session, socket) do
+    IO.inspect(session, label: "HomeLive session")
+    IO.inspect(socket, label: "HomeLive socket")
     {:ok,
      socket
+     |> assign(:user_token, session["user_token"])
      |> assign(:selected_mode, :left)
      |> assign(:show_modal, false)
      |> assign(:form, to_form(%{"name" => "" , "deck_type" => "tshirt", "custom_deck" => ""}))}
@@ -38,17 +41,17 @@ defmodule ElixirPlanningPokerWeb.HomeLive do
   end
 
   def handle_event("submit", %{"room" => params}, socket) do
-    atomized =
+    room_params =
     for {k, v} <- params, into: %{} do
       {String.to_atom(k), v}
     end
-    {_ , room_pid} = ElixirPlanningPoker.Room.start_link(atomized)
+    Map.put(room_params, :users, %{:host => socket.assigns.user_token})
+    {_ , room_pid} = ElixirPlanningPoker.Room.start_link(room_params)
     room_state = ElixirPlanningPoker.Room.get_state(room_pid)
     room_code = room_state.room_code
     {:noreply,
     socket
     |> push_navigate(to: ~p"/rooms/#{room_code}")}
-
   end
 
 end
