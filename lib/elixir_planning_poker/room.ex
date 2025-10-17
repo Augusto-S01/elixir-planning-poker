@@ -1,27 +1,21 @@
 defmodule ElixirPlanningPoker.Room do
-
   use GenServer
 
   defstruct [:name, :deck_type, :custom_deck, :users, :stories, :current_story, :state , :cards, :room_code]
 
   # Client API
-  def start_link(opts) do
-    {:ok, pid} = GenServer.start_link(__MODULE__, opts)
-    ElixirPlanningPoker.RoomManager.add_room(pid)
-    IO.inspect(pid, label: "Started Room with PID")
-    {:ok, pid}
+  def start_link(%{room_code: room_code} = opts) do
+    GenServer.start_link(__MODULE__, opts, name: via(room_code))
   end
 
-  def get_state(pid) do
-    GenServer.call(pid, :get_state)
+  def get_state(room_code) do
+    GenServer.call(via(room_code), :get_state)
   end
 
-  # server callbacks
-  @impl true
-  def handle_call(:get_state, _from, state) do
-    {:reply, state, state}
-  end
+  defp via(room_code),
+    do: {:via, Registry, {ElixirPlanningPoker.RoomRegistry, room_code}}
 
+  # Server Callbacks
   @impl true
   def init(opts) do
     room = %__MODULE__{
@@ -33,23 +27,24 @@ defmodule ElixirPlanningPoker.Room do
       current_story: nil,
       state: :waiting,
       cards: get_cards_from_deck(opts[:deck_type], opts[:custom_deck]),
-      room_code: opts[:room_code] || generate_room_code()
+      room_code: opts[:room_code]
     }
+
     {:ok, room}
   end
 
+  @impl true
+  def handle_call(:get_state, _from, state), do: {:reply, state, state}
+
+  # Helper
   defp get_cards_from_deck(deck_type, custom_deck) do
     case deck_type do
       "fibonacci" -> ["0", "1/2", "1", "2", "3", "5", "8", "13", "21", "34", "55", "89", "?"]
       "tshirt" -> ["XS", "S", "M", "L", "XL", "?"]
       "sequential" -> Enum.map(1..20, &Integer.to_string/1) ++ ["?"]
-      "custom" -> String.split(custom_deck || "", ",") |> Enum.map(&String.trim/1) |> Enum.filter(&(&1 != ""))
+      "custom" -> custom_deck |> to_string() |> String.split(",") |> Enum.map(&String.trim/1) |> Enum.reject(&(&1 == ""))
       _ -> []
     end
-  end
-
-  defp generate_room_code do
-    :crypto.strong_rand_bytes(3) |> Base.url_encode64() |> binary_part(0, 4)
   end
 
 end

@@ -1,8 +1,5 @@
 defmodule ElixirPlanningPoker.Application do
-  # See https://hexdocs.pm/elixir/Application.html
-  # for more information on OTP Applications
   @moduledoc false
-
   use Application
 
   @impl true
@@ -10,24 +7,18 @@ defmodule ElixirPlanningPoker.Application do
     children = [
       ElixirPlanningPokerWeb.Telemetry,
       ElixirPlanningPoker.Repo,
+
       {DNSCluster, query: Application.get_env(:elixir_planning_poker, :dns_cluster_query) || :ignore},
+      {Registry, keys: :unique, name: ElixirPlanningPoker.RoomRegistry},
       {Phoenix.PubSub, name: ElixirPlanningPoker.PubSub},
-      # Start a worker by calling: ElixirPlanningPoker.Worker.start_link(arg)
-      # {ElixirPlanningPoker.Worker, arg},
-      # Start to serve requests, typically the last entry
-      ElixirPlanningPokerWeb.Endpoint,
-      ElixirPlanningPoker.RoomManager
+      {DynamicSupervisor, strategy: :one_for_one, name: ElixirPlanningPoker.RoomSupervisor},
+      ElixirPlanningPokerWeb.Endpoint
     ]
 
-
-    # See https://hexdocs.pm/elixir/Supervisor.html
-    # for other strategies and supported options
     opts = [strategy: :one_for_one, name: ElixirPlanningPoker.Supervisor]
     Supervisor.start_link(children, opts)
   end
 
-  # Tell Phoenix to update the endpoint configuration
-  # whenever the application is updated.
   @impl true
   def config_change(changed, _new, removed) do
     ElixirPlanningPokerWeb.Endpoint.config_change(changed, removed)
