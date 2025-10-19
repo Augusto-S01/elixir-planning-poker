@@ -3,6 +3,7 @@ defmodule ElixirPlanningPokerWeb.HomeLive do
 
   import ElixirPlanningPokerWeb.Components.Swiper
   import ElixirPlanningPokerWeb.Components.RoomConfigModal
+  import ElixirPlanningPokerWeb.ModalComponent
   alias ElixirPlanningPokerWeb.Components.Icon
 
   def mount(_params, session, socket) do
@@ -54,6 +55,10 @@ defmodule ElixirPlanningPokerWeb.HomeLive do
       {:error, reason} ->
         {:noreply, put_flash(socket, :error, "Não foi possível criar a sala: #{inspect(reason)}")}
     end
+  end
+
+  def handle_event("ignore_click", _params, socket) do
+    {:noreply, socket}
   end
 
   defp generate_room_code do

@@ -44,9 +44,8 @@
       </div>
 </main>
 
-<%= if @show_modal do %>
-  <.room_config_modal form={@form} />
-<% end %>
+
+<.room_config_modal form={@form} show={@show_modal} />
 
 
 <Layouts.theme_toggle />
