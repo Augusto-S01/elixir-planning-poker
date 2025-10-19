@@ -44,7 +44,7 @@ defmodule ElixirPlanningPokerWeb.HomeLive do
     room_params =
       params
       |> Enum.into(%{}, fn {k, v} -> {String.to_atom(k), v} end)
-      |> Map.put(:users, %{host: socket.assigns.user_token})
+      |> Map.put(:users, [%{:user => socket.assigns.user_token, :role => :host, name: params["user_name"] || ""}])
       |> Map.put_new(:room_code, generate_room_code())
 
     case ElixirPlanningPoker.RoomManager.start_or_get(room_params) do

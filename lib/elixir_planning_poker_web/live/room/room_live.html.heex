@@ -1,5 +1,12 @@
 <main class="flex min-h-screen flex-col items-center justify-center p-24">
     <button phx-click="teste">Testeeee</button>
+    <span>
+        <%= for user <- @room.users do %>
+          <span> name:  <%= user.name %> </span>
+          <span> role:  <%= user.role %> </span>
+          <span> user:  <%= user.user %> </span>
+        <% end %>
+    </span>
 </main>
 <ElixirPlanningPokerWeb.Layouts.flash_group flash={@flash} />
 <Layouts.theme_toggle />
