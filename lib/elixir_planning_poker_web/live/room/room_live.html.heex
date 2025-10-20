@@ -1,12 +1,40 @@
 <main class="flex min-h-screen flex-col items-center justify-center p-24">
-    <button phx-click="teste">Testeeee</button>
-    <span>
-        <%= for user <- @room.users do %>
-          <span> name:  <%= user.name %> </span>
-          <span> role:  <%= user.role %> </span>
-          <span> user:  <%= user.user %> </span>
-        <% end %>
-    </span>
+  <button phx-click="teste">Testeeee</button>
+  <span>
+    <%= for user <- @room.users do %>
+      <p>name: {user.name}</p>
+      <p>role: {user.role}</p>
+      <p>user: {user.user}</p>
+    <% end %>
+  </span>
+  <p>ask : {@modal_ask_name}</p>
 </main>
+
+<.modal
+  show={@modal_ask_name}
+  footer={:form}
+  form_id="user_form"
+  title="What's your name?"
+>
+  <.form
+    for={@user}
+    id="user_form"
+    phx-change="validate_name"
+    phx-submit="submit_name"
+    class="space-y-4"
+  >
+    <div>
+      <label class="block text-sm font-medium mb-2">Name</label>
+      <input
+        type="text"
+        name="user[name]"
+        value={@user.name}
+        class="input input-bordered w-full"
+        required
+      />
+    </div>
+  </.form>
+</.modal>
+
 <ElixirPlanningPokerWeb.Layouts.flash_group flash={@flash} />
 <Layouts.theme_toggle />
