@@ -3,18 +3,19 @@ defmodule ElixirPlanningPokerWeb.HomeLive do
 
   import ElixirPlanningPokerWeb.Components.Swiper
   import ElixirPlanningPokerWeb.Components.RoomConfigModal
+  alias ElixirPlanningPoker.{RoomManager, User}
+  import ElixirPlanningPokerWeb.Utils
   alias ElixirPlanningPokerWeb.Components.Icon
 
   def mount(_params, session, socket) do
-    IO.inspect(session, label: "HomeLive session")
-    IO.inspect(socket, label: "HomeLive socket")
+    user = User.new(session["user_token"])
 
     {:ok,
      socket
      |> assign(:user_token, session["user_token"])
      |> assign(:selected_mode, :left)
      |> assign(:show_modal, false)
-     |> assign(:form, to_form(%{"name" => "", "deck_type" => "tshirt", "custom_deck" => ""}))}
+     |> assign(:form, to_form(User.changeset(user)))}
   end
 
   def handle_event("swiper_toggle", params, socket) do
@@ -41,20 +42,31 @@ defmodule ElixirPlanningPokerWeb.HomeLive do
   end
 
   def handle_event("submit", %{"room" => params}, socket) do
-    room_params =
-      params
-      |> Enum.into(%{}, fn {k, v} -> {String.to_atom(k), v} end)
-      |> Map.put(:users, [%{:user => socket.assigns.user_token, :role => :host, name: params["user_name"] || ""}])
-      |> Map.put_new(:room_code, generate_room_code())
+  params = atomize_keys(params)
+  user =
+    socket.assigns.user_token
+    |> User.new(params[:user_name] || "", :host)
+    |> Map.from_struct()
 
-    case ElixirPlanningPoker.RoomManager.start_or_get(room_params) do
-      {:ok, _pid} ->
-        {:noreply, push_navigate(socket, to: ~p"/rooms/#{room_params.room_code}")}
+  room_params =
+    params
+    |> Map.put(:users, [user])
+    |> Map.put_new(:room_code, generate_room_code())
 
-      {:error, reason} ->
-        {:noreply, put_flash(socket, :error, "Não foi possível criar a sala: #{inspect(reason)}")}
-    end
+  with {:ok, _pid} <- RoomManager.start_or_get(room_params) do
+    {:noreply,
+     socket
+     |> assign(:show_modal, false)
+     |> push_navigate(to: ~p"/rooms/#{room_params.room_code}")}
+  else
+    {:error, reason} ->
+      {:noreply,
+       socket
+       |> assign(:show_modal, false)
+       |> put_flash(:error, "Error creating room: #{inspect(reason)}")
+       |> push_navigate(to: "/")}
   end
+end
 
   def handle_event("ignore_click", _params, socket) do
     {:noreply, socket}

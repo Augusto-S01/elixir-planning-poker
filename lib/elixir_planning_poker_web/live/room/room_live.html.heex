@@ -17,7 +17,7 @@
   title="What's your name?"
 >
   <.form
-    for={@user}
+    for={to_form(@user, as: :user)}
     id="user_form"
     phx-change="validate_name"
     phx-submit="submit_name"
@@ -28,7 +28,7 @@
       <input
         type="text"
         name="user[name]"
-        value={@user.name}
+        value={@user["name"]}
         class="input input-bordered w-full"
         required
       />
