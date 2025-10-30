@@ -1,6 +1,7 @@
 defmodule ElixirPlanningPoker.Room do
   use GenServer
 
+  alias ElixirPlanningPoker.User
   defstruct [
     :name,
     :deck_type,
@@ -29,11 +30,12 @@ defmodule ElixirPlanningPoker.Room do
   # Server Callbacks
   @impl true
   def init(opts) do
+    IO.inspect(opts, label: "Initializing Room with opts")
     room = %__MODULE__{
       name: opts[:name] || "New Room",
       deck_type: opts[:deck_type] || "fibonacci",
       custom_deck: opts[:custom_deck] || "",
-      users: opts[:users] || %{},
+      users: opts[:users] || [],
       stories: [],
       current_story: nil,
       state: :waiting,
@@ -46,11 +48,13 @@ defmodule ElixirPlanningPoker.Room do
 
   @impl true
   def handle_cast({:update_user_name, user_token, name}, state) do
+    IO.inspect({user_token, name}, label: "Updating user name")
     updated_users =
       Enum.map(state.users, fn user ->
         if user.user == user_token, do: %{user | name: name}, else: user
       end)
 
+    IO.inspect(updated_users, label: "Updated users list")
     new_state = %{state | users: updated_users}
 
     notify_users_updated(new_state)

@@ -17,24 +17,25 @@
   title="What's your name?"
 >
   <.form
-    for={to_form(@user, as: :user)}
+    for={to_form(@modal_ask_name_form, as: :user)}
     id="user_form"
     phx-change="validate_name"
     phx-submit="submit_name"
     class="space-y-4"
+    :let={f}
   >
     <div>
       <label class="block text-sm font-medium mb-2">Name</label>
-      <input
+      <.input
         type="text"
-        name="user[name]"
-        value={@user["name"]}
+        field={f[:name]}
         class="input input-bordered w-full"
         required
       />
     </div>
   </.form>
 </.modal>
+
 
 <ElixirPlanningPokerWeb.Layouts.flash_group flash={@flash} />
 <Layouts.theme_toggle />

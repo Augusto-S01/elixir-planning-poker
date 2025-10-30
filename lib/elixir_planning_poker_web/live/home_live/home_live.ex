@@ -46,8 +46,7 @@ defmodule ElixirPlanningPokerWeb.HomeLive do
   user =
     socket.assigns.user_token
     |> User.new(params[:user_name] || "", :host)
-    |> Map.from_struct()
-
+  IO.inspect(user, label: "New host user")
   room_params =
     params
     |> Map.put(:users, [user])
@@ -58,6 +57,7 @@ defmodule ElixirPlanningPokerWeb.HomeLive do
      socket
      |> assign(:show_modal, false)
      |> push_navigate(to: ~p"/rooms/#{room_params.room_code}")}
+     |> IO.inspect(label: "Navigating to room")
   else
     {:error, reason} ->
       {:noreply,

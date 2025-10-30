@@ -45,6 +45,8 @@ defmodule ElixirPlanningPokerWeb.RoomLive do
     |> assign(:room, state)
     |> assign(:room_code, room_code)
     |> assign(:user_token, user_token)
+    |> assign(:modal_ask_name, false)
+    |> assign(:modal_ask_name_form, %{"name" => ""})
   end
 
   defp assign_user_and_modal(socket, user_token) do
@@ -53,15 +55,15 @@ defmodule ElixirPlanningPokerWeb.RoomLive do
     case User.find_user(users, user_token) do
       {:ok, user} ->
         modal_needed = is_nil(user.name) or String.trim(user.name) == ""
-
         assign(socket,
-          user: user,
+          modal_ask_name_form: %{"name" => user.name || "", "role" => user.role || "", "user" => user.user || ""},
           modal_ask_name: modal_needed
         )
 
       {:error, :not_found} ->
+        new_user = User.new(user_token)
         assign(socket,
-          user: User.new(user_token),
+          modal_ask_name_form: %{"name" => new_user.name, "role" => new_user.role, "user" => new_user.user},
           modal_ask_name: true
         )
     end
@@ -75,6 +77,7 @@ defmodule ElixirPlanningPokerWeb.RoomLive do
   end
 
   def handle_event("submit_name", %{"user" => %{"name" => name}}, socket) do
+    IO.inspect(name, label: "Submitted name")
     RoomManager.update_user_name(
       socket.assigns.room_code,
       socket.assigns.user_token,
