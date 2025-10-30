@@ -23,6 +23,10 @@ defmodule ElixirPlanningPoker.Room do
     GenServer.call(via(room_code), :get_state)
   end
 
+  def add_user(room_code, user_params) do
+    GenServer.cast(via(room_code), {:add_user, user_params})
+  end
+
   def update_user_name(room_code, user_token, name) do
     GenServer.cast(via(room_code), {:update_user_name, user_token, name})
   end
@@ -59,6 +63,14 @@ defmodule ElixirPlanningPoker.Room do
 
     notify_users_updated(new_state)
 
+    {:noreply, new_state}
+  end
+
+  @impl true
+  def handle_cast({:add_user, user}, state) do
+    IO.inspect(user, label: "Adding new user")
+    new_state = %{state | users: state.users ++ [user]}
+    notify_users_updated(new_state)
     {:noreply, new_state}
   end
 

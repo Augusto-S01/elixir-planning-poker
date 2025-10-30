@@ -29,4 +29,13 @@ defmodule ElixirPlanningPoker.RoomManager do
       [] -> {:error, :room_not_found}
     end
   end
+
+  def add_user(room_code, user_params) do
+    case Registry.lookup(ElixirPlanningPoker.RoomRegistry, room_code) do
+      [{_pid, _}] ->
+        ElixirPlanningPoker.Room.add_user(room_code, user_params)
+
+      [] -> {:error, :room_not_found}
+    end
+  end
 end

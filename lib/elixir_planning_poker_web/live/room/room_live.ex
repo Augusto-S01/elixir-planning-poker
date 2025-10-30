@@ -47,6 +47,7 @@ defmodule ElixirPlanningPokerWeb.RoomLive do
     |> assign(:user_token, user_token)
     |> assign(:modal_ask_name, false)
     |> assign(:modal_ask_name_form, %{"name" => ""})
+    |> assign(:new_user, false)
   end
 
   defp assign_user_and_modal(socket, user_token) do
@@ -55,16 +56,19 @@ defmodule ElixirPlanningPokerWeb.RoomLive do
     case User.find_user(users, user_token) do
       {:ok, user} ->
         modal_needed = is_nil(user.name) or String.trim(user.name) == ""
+
         assign(socket,
-          modal_ask_name_form: %{"name" => user.name || "", "role" => user.role || "", "user" => user.user || ""},
+          modal_ask_name_form: %{"name" => user.name || ""},
           modal_ask_name: modal_needed
         )
 
       {:error, :not_found} ->
         new_user = User.new(user_token)
+
         assign(socket,
-          modal_ask_name_form: %{"name" => new_user.name, "role" => new_user.role, "user" => new_user.user},
-          modal_ask_name: true
+          modal_ask_name_form: %{"name" => new_user.name},
+          modal_ask_name: true,
+          new_user: true
         )
     end
   end
@@ -76,13 +80,32 @@ defmodule ElixirPlanningPokerWeb.RoomLive do
     {:noreply, assign(socket, :modal_ask_name, false)}
   end
 
-  def handle_event("submit_name", %{"user" => %{"name" => name}}, socket) do
+  def handle_event("submit_name", %{"user" => user_params}, socket) do
+    IO.inspect(user_params, label: "Name form submitted")
+    name = user_params["name"] |> String.trim()
     IO.inspect(name, label: "Submitted name")
-    RoomManager.update_user_name(
-      socket.assigns.room_code,
-      socket.assigns.user_token,
-      name
-    )
+
+    case socket.assigns.new_user do
+      true ->
+        user =
+          socket.assigns.user_token
+          |> User.new(name)
+
+        IO.inspect(user, label: "New user to add")
+        IO.inspect(is_struct(user))
+
+        RoomManager.add_user(
+          socket.assigns.room_code,
+          user
+        )
+
+      false ->
+        RoomManager.update_user_name(
+          socket.assigns.room_code,
+          socket.assigns.user_token,
+          name
+        )
+    end
 
     {:noreply, assign(socket, :modal_ask_name, false)}
   end
@@ -92,6 +115,7 @@ defmodule ElixirPlanningPokerWeb.RoomLive do
   # --- info handlers ---
   @impl true
   def handle_info({:users_updated, users}, socket) do
+    IO.inspect(users, label: "Updated users list")
     {:noreply, assign(socket, :room, %{socket.assigns.room | users: users})}
   end
 end
