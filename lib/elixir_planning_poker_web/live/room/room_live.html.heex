@@ -1,6 +1,7 @@
 <main class="flex min-h-screen flex-col items-center justify-center p-24">
   <button phx-click="teste">Testeeee</button>
   <span>
+    ️Users:
     <%= for user <- @room.users do %>
       <p>name: {user.name}</p>
       <p>role: {user.role}</p>
@@ -8,6 +9,17 @@
     <% end %>
   </span>
   <p>ask : {@modal_ask_name}</p>
+  <div>
+    State: {@room.state}
+    <button phx-click="alter-status" phx-value-status="voting" class="btn">Start Voting</button>
+  </div>
+  <div>
+    Cards:
+    <%= for card <- @room.cards do %>
+      <p phx-click="select_card" class="cursor-pointer btn" phx-value-card={card}>Card: {card}</p>
+    <% end %>
+  </div>
+
 </main>
 
 <.modal

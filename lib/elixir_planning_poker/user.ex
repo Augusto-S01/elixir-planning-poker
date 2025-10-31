@@ -24,6 +24,14 @@ defmodule ElixirPlanningPoker.User do
     end
   end
 
+  def is_host?(users, user_token) do
+    case find_user(users, user_token) do
+      {:ok, %__MODULE__{role: :host}} -> true
+      {:ok, _} -> false
+      {:error, :not_found} -> false
+    end
+  end
+
   def changeset(%__MODULE__{} = user, attrs \\ %{}) do
     {user, %{name: :string}}
     |> Ecto.Changeset.cast(attrs, [:name])

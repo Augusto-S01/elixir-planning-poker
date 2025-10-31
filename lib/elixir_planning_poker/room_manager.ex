@@ -20,11 +20,25 @@ defmodule ElixirPlanningPoker.RoomManager do
     end
   end
 
+  def select_card(room_code, user_token, card) do
+    case Registry.lookup(ElixirPlanningPoker.RoomRegistry, room_code) do
+      [{_pid, _}] ->
+        ElixirPlanningPoker.Room.select_card(room_code, user_token, card)
+    end
+  end
+
+  def alter_room_status(room_code, user_token, status) do
+    case Registry.lookup(ElixirPlanningPoker.RoomRegistry, room_code) do
+      [{_pid, _}] ->
+        ElixirPlanningPoker.Room.alter_room_status(room_code, user_token, status)
+      [] -> {:error, :room_not_found}
+    end
+  end
+
   def update_user_name(room_code, user_token, name) do
     case Registry.lookup(ElixirPlanningPoker.RoomRegistry, room_code) do
       [{_pid, _}] ->
         teste = ElixirPlanningPoker.Room.update_user_name(room_code, user_token, name)
-      IO.inspect(teste, label: "Teste RoomManager update_user_name")
 
       [] -> {:error, :room_not_found}
     end

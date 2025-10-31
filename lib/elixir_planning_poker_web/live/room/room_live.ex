@@ -1,7 +1,6 @@
 defmodule ElixirPlanningPokerWeb.RoomLive do
   use ElixirPlanningPokerWeb, :live_view
   import ElixirPlanningPokerWeb.ModalComponent
-  import ElixirPlanningPokerWeb.Utils, only: [atom_keys_to_strings: 1]
   alias ElixirPlanningPoker.{RoomManager, User}
 
   @impl true
@@ -81,24 +80,16 @@ defmodule ElixirPlanningPokerWeb.RoomLive do
   end
 
   def handle_event("submit_name", %{"user" => user_params}, socket) do
-    IO.inspect(user_params, label: "Name form submitted")
     name = user_params["name"] |> String.trim()
-    IO.inspect(name, label: "Submitted name")
-
     case socket.assigns.new_user do
       true ->
         user =
           socket.assigns.user_token
           |> User.new(name)
-
-        IO.inspect(user, label: "New user to add")
-        IO.inspect(is_struct(user))
-
         RoomManager.add_user(
           socket.assigns.room_code,
           user
         )
-
       false ->
         RoomManager.update_user_name(
           socket.assigns.room_code,
@@ -106,8 +97,27 @@ defmodule ElixirPlanningPokerWeb.RoomLive do
           name
         )
     end
-
     {:noreply, assign(socket, :modal_ask_name, false)}
+  end
+
+  def handle_event("alter-status", %{"status" => status}, socket) do
+    RoomManager.alter_room_status(socket.assigns.room_code, socket.assigns.user_token, String.to_atom(status))
+    {:noreply, socket}
+  end
+
+  def handle_event("select_card", %{"card" => card}, socket) do
+    case socket.assigns.room.state do
+      :voting ->
+        RoomManager.select_card(
+          socket.assigns.room_code,
+          socket.assigns.user_token,
+          card
+        )
+        {:noreply, socket}
+      _ ->
+        socket = put_flash(socket, :error, "Cannot select card in the current state.")
+        {:noreply, socket}
+    end
   end
 
   def handle_event(_, _, socket), do: {:noreply, socket}
@@ -115,7 +125,13 @@ defmodule ElixirPlanningPokerWeb.RoomLive do
   # --- info handlers ---
   @impl true
   def handle_info({:users_updated, users}, socket) do
-    IO.inspect(users, label: "Updated users list")
     {:noreply, assign(socket, :room, %{socket.assigns.room | users: users})}
   end
+
+  @impl true
+  def handle_info({:room_status_changed, new_status}, socket) do
+    {:noreply, assign(socket, :room, %{socket.assigns.room | state: new_status})}
+  end
+
+
 end

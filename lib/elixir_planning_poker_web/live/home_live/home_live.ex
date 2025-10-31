@@ -42,31 +42,30 @@ defmodule ElixirPlanningPokerWeb.HomeLive do
   end
 
   def handle_event("submit", %{"room" => params}, socket) do
-  params = atomize_keys(params)
-  user =
-    socket.assigns.user_token
-    |> User.new(params[:user_name] || "", :host)
-  IO.inspect(user, label: "New host user")
-  room_params =
-    params
-    |> Map.put(:users, [user])
-    |> Map.put_new(:room_code, generate_room_code())
+    params = atomize_keys(params)
+    user =
+      socket.assigns.user_token
+      |> User.new(params[:user_name] || "", :host)
 
-  with {:ok, _pid} <- RoomManager.start_or_get(room_params) do
-    {:noreply,
-     socket
-     |> assign(:show_modal, false)
-     |> push_navigate(to: ~p"/rooms/#{room_params.room_code}")}
-     |> IO.inspect(label: "Navigating to room")
-  else
-    {:error, reason} ->
+    room_params =
+      params
+      |> Map.put(:users, [user])
+      |> Map.put_new(:room_code, generate_room_code())
+
+    with {:ok, _pid} <- RoomManager.start_or_get(room_params) do
       {:noreply,
        socket
        |> assign(:show_modal, false)
-       |> put_flash(:error, "Error creating room: #{inspect(reason)}")
-       |> push_navigate(to: "/")}
+       |> push_navigate(to: ~p"/rooms/#{room_params.room_code}")}
+    else
+      {:error, reason} ->
+        {:noreply,
+         socket
+         |> assign(:show_modal, false)
+         |> put_flash(:error, "Error creating room: #{inspect(reason)}")
+         |> push_navigate(to: "/")}
+    end
   end
-end
 
   def handle_event("ignore_click", _params, socket) do
     {:noreply, socket}
