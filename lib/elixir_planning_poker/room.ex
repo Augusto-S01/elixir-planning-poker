@@ -75,7 +75,7 @@ defmodule ElixirPlanningPoker.Room do
   def handle_cast({:alter_room_status, user_token, status}, state) do
     new_state = case User.is_host?(state.users, user_token) do
       true ->
-        notify_room_status_changed(state)
+        notify_room_status_changed(%{state | state: status})
         %{state | state: status}
 
       false ->
