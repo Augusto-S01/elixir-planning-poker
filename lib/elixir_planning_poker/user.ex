@@ -1,17 +1,19 @@
 defmodule ElixirPlanningPoker.User do
   @enforce_keys [:user]
-  defstruct [:name, :user, :role]
+  defstruct [:name, :user, :role, :vote, :voted?]
 
   @type t :: %__MODULE__{
           name: String.t(),
           user: String.t(),
-          role: :host | :participant | :observer | atom()
+          role: :host | :participant | :observer | atom(),
+          vote: integer() | nil,
+          voted?: boolean()
         }
 
   @spec new(String.t(), String.t(), atom()) :: t()
   def new(user_token, name \\ "", role \\ :participant)
       when is_binary(user_token) and is_atom(role) do
-    %__MODULE__{user: user_token, name: name, role: role}
+      %__MODULE__{user: user_token, name: name, role: role, vote: nil, voted?: false}
   end
 
   @spec find_user([map()], String.t()) :: {:ok, map()} | {:error, :not_found}
@@ -36,6 +38,11 @@ defmodule ElixirPlanningPoker.User do
     {user, %{name: :string}}
     |> Ecto.Changeset.cast(attrs, [:name])
     |> Ecto.Changeset.validate_required([:name])
+  end
+
+
+  def set_vote(%__MODULE__{} = user, vote) do
+    %{user | vote: vote, voted?: !is_nil(vote)}
   end
 
   defp match_user_token?(%__MODULE__{user: token}, user_token), do: token == user_token

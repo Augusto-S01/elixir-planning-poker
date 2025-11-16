@@ -106,6 +106,7 @@ defmodule ElixirPlanningPokerWeb.RoomLive do
   end
 
   def handle_event("select_card", %{"card" => card}, socket) do
+    IO.inspect(card, label: "Selected card")
     case socket.assigns.room.state do
       :voting ->
         RoomManager.select_card(
@@ -131,6 +132,22 @@ defmodule ElixirPlanningPokerWeb.RoomLive do
   @impl true
   def handle_info({:room_status_changed, new_status}, socket) do
     {:noreply, assign(socket, :room, %{socket.assigns.room | state: new_status})}
+  end
+
+  @impl true
+  def handle_info({:user_voted, user_token, voted?}, socket) do
+    socket = if voted? do
+      put_flash(socket, :info, "User #{user_token} voted.")
+    else
+      put_flash(socket, :info, "User #{user_token} removed their vote.")
+    end
+
+    updated_users =
+      Enum.map(socket.assigns.room.users, fn user ->
+        if user.user == user_token, do: %{user | voted?: voted?}, else: user
+      end)
+
+    {:noreply, assign(socket, :room, %{socket.assigns.room | users: updated_users})}
   end
 
 
