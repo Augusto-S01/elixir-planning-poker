@@ -91,19 +91,28 @@ defmodule ElixirPlanningPoker.Room do
     {:noreply, new_state}
   end
 
-  @impl true
-  def handle_cast({:select_card, user_token, vote}, state) do
-    updated_users =
-      Enum.map(state.users, fn user ->
-        if user.user == user_token, do: User.set_vote(user, vote), else: user
-      end)
+@impl true
+def handle_cast({:select_card, user_token, vote}, state) do
+  IO.inspect(vote, label: "Vote received")
 
-    new_state = %{state | users: updated_users}
+  updated_users =
+    Enum.map(state.users, fn
+      %{user: ^user_token, vote: ^vote} = u ->
+        notify_user_voted(user_token, false, state.room_code)
+        User.set_vote(u, nil)
 
-    notify_user_voted(user_token, !is_nil(vote), new_state.room_code)
+      %{user: ^user_token} = u ->
+        notify_user_voted(user_token, true, state.room_code)
+        User.set_vote(u, vote)
 
-    {:noreply, new_state}
-  end
+      u ->
+        u
+
+    end)
+
+  {:noreply, %{state | users: updated_users}}
+end
+
 
   @impl true
   def handle_call(:get_state, _from, state), do: {:reply, state, state}
@@ -133,6 +142,7 @@ defmodule ElixirPlanningPoker.Room do
   end
 
   defp notify_user_voted(user_token, voted?, room_code) do
+    IO.inspect(voted?, label: "User voted event")
     Phoenix.PubSub.broadcast(
       ElixirPlanningPoker.PubSub,
       "room:#{room_code}",
