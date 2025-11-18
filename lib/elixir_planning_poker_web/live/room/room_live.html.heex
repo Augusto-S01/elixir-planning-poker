@@ -17,16 +17,20 @@
   <div>
     Cards:
     <%= for card <- @room.cards do %>
-      <p phx-click="select_card" class="cursor-pointer btn" phx-value-card={card}>Card: {card}</p>
+      <p phx-click="select-card" class="cursor-pointer btn" phx-value-card={card}>Card: {card}</p>
     <% end %>
   </div>
-
+  <%= if User.is_host?(@room.users, @user_token) do %>
+    <button phx-click="open-room-config" class="btn btn-secondary mt-4">Open Room Config</button>
+  <% end %>
 </main>
 
 <.modal
   show={@modal_ask_name}
   footer={:form}
   form_id="user_form"
+  close_event={@close_modal_ask_name}
+  cancelable={false}
   title="What's your name?"
 >
   <.form
@@ -48,6 +52,11 @@
     </div>
   </.form>
 </.modal>
+
+
+
+<.room_config_modal form={@form} show={@show_room_config_modal} close_event={@close_room_config} />
+
 
 
 <ElixirPlanningPokerWeb.Layouts.flash_group flash={@flash} />

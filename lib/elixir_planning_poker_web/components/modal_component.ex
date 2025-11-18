@@ -5,6 +5,8 @@ defmodule ElixirPlanningPokerWeb.ModalComponent do
   attr :title, :string, default: nil
   slot :inner_block, required: true
   attr :form_id, :string, default: nil
+  attr :cancelable, :boolean, default: true
+  attr :close_event, :string, default: "close_modal"
   attr :footer, :atom, default: :default
 
   def modal(assigns) do
@@ -12,7 +14,7 @@ defmodule ElixirPlanningPokerWeb.ModalComponent do
     <div
       :if={@show}
       class="modal modal-open bg-black/50 backdrop-blur-sm"
-      phx-click="close_modal"
+      phx-click={@cancelable && @close_event}
     >
       <div
         class="modal-box max-w-2xl bg-base-100 text-base-content shadow-2xl border border-base-300 relative"
@@ -37,7 +39,7 @@ defmodule ElixirPlanningPokerWeb.ModalComponent do
       :default ->
         ~H"""
         <div class="modal-action">
-          <button type="button" phx-click="close_modal" class="btn btn-outline">Close</button>
+          <button type="button" phx-click={@close_event} class="btn btn-outline">Close</button>
         </div>
         """
 
@@ -45,7 +47,9 @@ defmodule ElixirPlanningPokerWeb.ModalComponent do
         ~H"""
         <div class="modal-action">
           <button type="submit" form={@form_id} class="btn btn-primary">Submit</button>
-          <button type="button" phx-click="close_modal" class="btn btn-outline">Cancel</button>
+          <%= if @cancelable do %>
+            <button type="button" phx-click={@close_event} class="btn btn-outline">Cancel</button>
+          <% end %>
         </div>
         """
 

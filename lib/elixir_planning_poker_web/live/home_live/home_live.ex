@@ -7,6 +7,8 @@ defmodule ElixirPlanningPokerWeb.HomeLive do
   import ElixirPlanningPokerWeb.Utils
   alias ElixirPlanningPokerWeb.Components.Icon
 
+  @close_room_config "close_room_config"
+
   def mount(_params, session, socket) do
     user = User.new(session["user_token"])
 
@@ -14,8 +16,10 @@ defmodule ElixirPlanningPokerWeb.HomeLive do
      socket
      |> assign(:user_token, session["user_token"])
      |> assign(:selected_mode, :left)
-     |> assign(:show_modal, false)
+     |> assign(:show_room_config_modal, false)
+     |> assign(:close_room_config, @close_room_config)
      |> assign(:form, to_form(User.changeset(user)))}
+
   end
 
   def handle_event("swiper_toggle", params, socket) do
@@ -29,11 +33,11 @@ defmodule ElixirPlanningPokerWeb.HomeLive do
   end
 
   def handle_event("create_room", _params, socket) do
-    {:noreply, assign(socket, :show_modal, true)}
+    {:noreply, assign(socket, :show_room_config_modal, true)}
   end
 
-  def handle_event("close_modal", _params, socket) do
-    {:noreply, assign(socket, :show_modal, false)}
+  def handle_event(@close_room_config, _params, socket) do
+    {:noreply, assign(socket, :show_room_config_modal, false)}
   end
 
   def handle_event("validate", %{"room" => room_params}, socket) do

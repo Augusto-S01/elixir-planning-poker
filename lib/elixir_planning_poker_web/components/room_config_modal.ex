@@ -5,11 +5,13 @@ defmodule ElixirPlanningPokerWeb.Components.RoomConfigModal do
 
   attr :form, :any, required: true
   attr :show, :boolean, required: true
+  attr :close_event, :string, required: true
+
 
 
 def room_config_modal(assigns) do
   ~H"""
-  <.modal show={@show} footer={:form} form_id="room_form" title="Room Configuration">
+  <.modal show={@show} footer={:form}  form_id="room_form" title="Room Configuration" close_event={@close_event}>
     <.form for={@form} id="room_form" phx-change="validate" phx-submit="submit" class="space-y-4">
       <div>
         <label class="block text-sm font-medium mb-2">Room Name</label>

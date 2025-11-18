@@ -1,7 +1,11 @@
 defmodule ElixirPlanningPokerWeb.RoomLive do
   use ElixirPlanningPokerWeb, :live_view
   import ElixirPlanningPokerWeb.ModalComponent
+  import ElixirPlanningPokerWeb.Components.RoomConfigModal
   alias ElixirPlanningPoker.{RoomManager, User}
+
+  @close_modal_ask_name "close_modal_ask_name"
+  @close_room_config "close_room_config"
 
   @impl true
   def mount(%{"room_code" => room_code}, session, socket) do
@@ -41,11 +45,18 @@ defmodule ElixirPlanningPokerWeb.RoomLive do
 
   defp assign_base_assigns(socket, state, room_code, user_token) do
     socket
+
+
     |> assign(:room, state)
     |> assign(:room_code, room_code)
     |> assign(:user_token, user_token)
     |> assign(:modal_ask_name, false)
     |> assign(:modal_ask_name_form, %{"name" => ""})
+    |> assign(:close_modal_ask_name, @close_modal_ask_name)
+    |> assign(:close_room_config, @close_room_config)
+    |> assign(:show_room_config_modal, false)
+    |> assign(:form, to_form(User.changeset(User.new(user_token))))
+
     |> assign(:new_user, false)
   end
 
@@ -75,8 +86,20 @@ defmodule ElixirPlanningPokerWeb.RoomLive do
   # --- event handlers ---
 
   @impl true
-  def handle_event("close_modal", _params, socket) do
+  def handle_event(@close_modal_ask_name, _params, socket) do
     {:noreply, assign(socket, :modal_ask_name, false)}
+  end
+
+  @impl true
+  def handle_event(@close_room_config, _params, socket) do
+    IO.inspect(socket, label: "Opening room config modal")
+    {:noreply, assign(socket, :show_room_config_modal, false)}
+  end
+
+  @impl true
+  def handle_event("open-room-config",__params, socket) do
+    IO.inspect(socket, label: "Opening room config modal")
+    {:noreply, assign(socket, :show_room_config_modal, true)}
   end
 
   def handle_event("submit_name", %{"user" => user_params}, socket) do
@@ -105,7 +128,7 @@ defmodule ElixirPlanningPokerWeb.RoomLive do
     {:noreply, socket}
   end
 
-  def handle_event("select_card", %{"card" => card}, socket) do
+  def handle_event("select-card", %{"card" => card}, socket) do
     IO.inspect(card, label: "Selected card")
     case socket.assigns.room.state do
       :voting ->
