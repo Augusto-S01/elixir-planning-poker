@@ -8,6 +8,8 @@ defmodule ElixirPlanningPokerWeb.HomeLive do
   alias ElixirPlanningPokerWeb.Components.Icon
 
   @close_room_config "close_room_config"
+  @submit_room_config "submit_room_config"
+  @validate_room_config "validate_room_config"
 
   def mount(_params, session, socket) do
     user = User.new(session["user_token"])
@@ -18,6 +20,8 @@ defmodule ElixirPlanningPokerWeb.HomeLive do
      |> assign(:selected_mode, :left)
      |> assign(:show_room_config_modal, false)
      |> assign(:close_room_config, @close_room_config)
+     |> assign(:validate_room_config, @validate_room_config)
+     |> assign(:submit_room_config, @submit_room_config)
      |> assign(:form, to_form(User.changeset(user)))}
 
   end
@@ -38,6 +42,16 @@ defmodule ElixirPlanningPokerWeb.HomeLive do
 
   def handle_event(@close_room_config, _params, socket) do
     {:noreply, assign(socket, :show_room_config_modal, false)}
+  end
+
+  def handle_event(@validate_room_config, params, socket) do
+    IO.inspect(params, label: "Room config params async")
+    {:noreply, socket}
+  end
+
+  def handle_event(@submit_room_config, params, socket) do
+    IO.inspect(params, label: "Room config params async submit")
+    {:noreply, socket}
   end
 
   def handle_event("validate", %{"room" => room_params}, socket) do

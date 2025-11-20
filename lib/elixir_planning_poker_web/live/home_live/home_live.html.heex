@@ -45,7 +45,13 @@
 </main>
 
 
-<.room_config_modal form={@form} show={@show_room_config_modal} close_event={@close_room_config} />
+<.room_config_modal 
+  form={@form} 
+  show={@show_room_config_modal} 
+  close_event={@close_room_config} 
+  validate_event={@validate_room_config}
+  submit_event={@submit_room_config}
+  />
 
 
 <Layouts.theme_toggle />

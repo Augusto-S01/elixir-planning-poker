@@ -38,7 +38,7 @@ defmodule ElixirPlanningPoker.RoomManager do
   def update_user_name(room_code, user_token, name) do
     case Registry.lookup(ElixirPlanningPoker.RoomRegistry, room_code) do
       [{_pid, _}] ->
-        teste = ElixirPlanningPoker.Room.update_user_name(room_code, user_token, name)
+        ElixirPlanningPoker.Room.update_user_name(room_code, user_token, name)
 
       [] -> {:error, :room_not_found}
     end
