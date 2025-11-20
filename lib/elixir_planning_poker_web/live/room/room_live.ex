@@ -1,11 +1,14 @@
 defmodule ElixirPlanningPokerWeb.RoomLive do
   use ElixirPlanningPokerWeb, :live_view
   import ElixirPlanningPokerWeb.ModalComponent
+  import ElixirPlanningPokerWeb.CoreComponents
   import ElixirPlanningPokerWeb.Components.RoomConfigModal
   alias ElixirPlanningPoker.{RoomManager, User}
 
   @close_modal_ask_name "close_modal_ask_name"
   @close_room_config "close_room_config"
+  @submit_room_config "submit_room_config"
+  @validate_room_config "validate_room_config"
 
   @impl true
   def mount(%{"room_code" => room_code}, session, socket) do
@@ -14,6 +17,7 @@ defmodule ElixirPlanningPokerWeb.RoomLive do
       socket
       |> assign_base_assigns(state, room_code, session["user_token"])
       |> assign_user_and_modal(session["user_token"])
+      |> assign_forms(state)
       |> then(&{:ok, &1})
     else
       {:error, :not_found} ->
@@ -43,10 +47,33 @@ defmodule ElixirPlanningPokerWeb.RoomLive do
     end
   end
 
+  defp assign_forms(socket,state) do
+    room_config_form =
+      ElixirPlanningPoker.RoomConfig
+      |> struct(%{
+          name: state.name,
+          deck_type: state.deck_type,
+          custom_deck: state.custom_deck
+        })
+      |> ElixirPlanningPoker.RoomConfig.changeset()
+      |> to_form(as: :room)
+
+    form_ask_name =
+      case User.find_user(state.users, socket.assigns.user_token) do
+        {:ok, user} ->
+          User.changeset(user)
+        {:error, :not_found} ->
+          User.changeset(User.new(socket.assigns.user_token))
+      end
+      |> to_form(as: :user)
+
+    socket
+    |> assign(:modal_ask_name_form, form_ask_name)
+    |> assign(:form_room_config, room_config_form)
+  end
+
   defp assign_base_assigns(socket, state, room_code, user_token) do
     socket
-
-
     |> assign(:room, state)
     |> assign(:room_code, room_code)
     |> assign(:user_token, user_token)
@@ -54,9 +81,9 @@ defmodule ElixirPlanningPokerWeb.RoomLive do
     |> assign(:modal_ask_name_form, %{"name" => ""})
     |> assign(:close_modal_ask_name, @close_modal_ask_name)
     |> assign(:close_room_config, @close_room_config)
+    |> assign(:submit_room_config, @submit_room_config)
+    |> assign(:validate_room_config, @validate_room_config)
     |> assign(:show_room_config_modal, false)
-    |> assign(:form, to_form(User.changeset(User.new(user_token))))
-
     |> assign(:new_user, false)
   end
 
@@ -91,6 +118,30 @@ defmodule ElixirPlanningPokerWeb.RoomLive do
   end
 
   @impl true
+  def handle_event(@validate_room_config, %{"room" => params}, socket) do
+    data = socket.assigns[:room_config_data] || socket.assigns.form_room_config.source.data
+
+    changeset =
+      ElixirPlanningPoker.RoomConfig.changeset(data, params)
+      |> Map.put(:action, :validate)
+
+    updated_data = Ecto.Changeset.apply_changes(changeset)
+
+    form = to_form(changeset, as: :room)
+
+    {:noreply,
+    socket
+    |> assign(:form_room_config, form)
+    |> assign(:room_config_data, updated_data)}
+  end
+
+  @impl true
+  def handle_event(@submit_room_config, params,socket) do
+    IO.inspect(params, label: "Room config params")
+    {:noreply, socket}
+  end
+
+  @impl true
   def handle_event(@close_room_config, _params, socket) do
     IO.inspect(socket, label: "Opening room config modal")
     {:noreply, assign(socket, :show_room_config_modal, false)}
@@ -99,6 +150,7 @@ defmodule ElixirPlanningPokerWeb.RoomLive do
   @impl true
   def handle_event("open-room-config",__params, socket) do
     IO.inspect(socket, label: "Opening room config modal")
+    IO.inspect(socket.assigns.form_room_config, label: "Form data")
     {:noreply, assign(socket, :show_room_config_modal, true)}
   end
 
