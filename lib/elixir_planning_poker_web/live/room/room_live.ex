@@ -47,13 +47,6 @@ defmodule ElixirPlanningPokerWeb.RoomLive do
   end
 
   defp assign_forms(socket,state) do
-    IO.inspect(state, label: "Room state in assign_forms")
-    room_config_form = %{
-          name: state.name,
-          deck_type: state.deck_type,
-          custom_deck: state.custom_deck || ""
-        }
-
     form_ask_name =
       case User.find_user(state.users, socket.assigns.user_token) do
         {:ok, user} ->
@@ -65,7 +58,16 @@ defmodule ElixirPlanningPokerWeb.RoomLive do
 
     socket
     |> assign(:modal_ask_name_form, form_ask_name)
-    |> assign(:form_room_config, room_config_form)
+    |> assign_room_config_form(state)
+  end
+
+  defp assign_room_config_form(socket, state) do
+    socket
+    |> assign(:form_room_config, %{
+          name: state.name,
+          deck_type: state.deck_type,
+          custom_deck: state.custom_deck || ""
+        } )
   end
 
   defp assign_base_assigns(socket, state, room_code, user_token) do
@@ -196,6 +198,14 @@ defmodule ElixirPlanningPokerWeb.RoomLive do
 
   # --- info handlers ---
   @impl true
+  def handle_info({@submit_room_config, new_state}, socket) do
+    IO.inspect(new_state, label: "New room state from config modal")
+    RoomManager.change_room_config(socket.assigns.room_code, new_state)
+    socket = assign(socket, :show_room_config_modal, false)
+    {:noreply, socket}
+  end
+
+  @impl true
   def handle_info({:users_updated, users}, socket) do
     {:noreply, assign(socket, :room, %{socket.assigns.room | users: users})}
   end
@@ -221,5 +231,13 @@ defmodule ElixirPlanningPokerWeb.RoomLive do
     {:noreply, assign(socket, :room, %{socket.assigns.room | users: updated_users})}
   end
 
+  @impl true
+  def handle_info({:room_config_changed, new_config}, socket) do
+    socket
+    |> assign(:room, Map.merge(socket.assigns.room, new_config))
+    |> assign_room_config_form(socket.assigns.room)
+    |> put_flash(:info, "Room configuration updated.")
+    |> then(&{:noreply, &1})
+  end
 
 end

@@ -39,6 +39,10 @@ defmodule ElixirPlanningPoker.Room do
     GenServer.cast(via(room_code), {:alter_room_status, user_token, status})
   end
 
+  def change_room_config(room_code, config_params) do
+    GenServer.cast(via(room_code), {:change_room_config, config_params})
+  end
+
   # Server Callbacks
   @impl true
   def init(opts) do
@@ -91,27 +95,47 @@ defmodule ElixirPlanningPoker.Room do
     {:noreply, new_state}
   end
 
-@impl true
-def handle_cast({:select_card, user_token, vote}, state) do
-  IO.inspect(vote, label: "Vote received")
+  @impl true
+  def handle_cast({:select_card, user_token, vote}, state) do
+    IO.inspect(vote, label: "Vote received")
 
-  updated_users =
-    Enum.map(state.users, fn
-      %{user: ^user_token, vote: ^vote} = u ->
-        notify_user_voted(user_token, false, state.room_code)
-        User.set_vote(u, nil)
+    updated_users =
+      Enum.map(state.users, fn
+        %{user: ^user_token, vote: ^vote} = u ->
+          notify_user_voted(user_token, false, state.room_code)
+          User.set_vote(u, nil)
 
-      %{user: ^user_token} = u ->
-        notify_user_voted(user_token, true, state.room_code)
-        User.set_vote(u, vote)
+        %{user: ^user_token} = u ->
+          notify_user_voted(user_token, true, state.room_code)
+          User.set_vote(u, vote)
 
-      u ->
-        u
+        u ->
+          u
 
-    end)
+      end)
 
-  {:noreply, %{state | users: updated_users}}
-end
+    {:noreply, %{state | users: updated_users}}
+  end
+
+  @impl true
+  def handle_cast({:change_room_config, config_params}, state) do
+    new_deck_type = Map.get(config_params, :deck_type, state.deck_type)
+    new_custom_deck = Map.get(config_params, :custom_deck, state.custom_deck)
+
+    new_state = %{
+      state
+      | name: Map.get(config_params, :name, state.name),
+        deck_type: new_deck_type,
+        custom_deck: new_custom_deck,
+        cards: get_cards_from_deck(new_deck_type, new_custom_deck)
+    }
+
+    notify_room_config_changed(new_state)
+
+    {:noreply, new_state}
+  end
+
+
 
 
   @impl true
@@ -141,6 +165,8 @@ end
     end
   end
 
+  # Helper notifications
+
   defp notify_user_voted(user_token, voted?, room_code) do
     IO.inspect(voted?, label: "User voted event")
     Phoenix.PubSub.broadcast(
@@ -163,6 +189,14 @@ end
       ElixirPlanningPoker.PubSub,
       "room:#{state.room_code}",
       {:room_status_changed, state.state}
+    )
+  end
+
+  defp notify_room_config_changed(state) do
+    Phoenix.PubSub.broadcast(
+      ElixirPlanningPoker.PubSub,
+      "room:#{state.room_code}",
+      {:room_config_changed, state}
     )
   end
 

@@ -31,7 +31,7 @@ defmodule ElixirPlanningPokerWeb.Components.RoomConfigModal do
       |> RoomConfig.changeset(params)
       |> Map.put(:action, :validate)
 
-      form = to_form(changeset, as: :room_config)
+    form = to_form(changeset, as: :room_config)
     {:noreply,
     socket
     |> assign(:changeset, changeset)

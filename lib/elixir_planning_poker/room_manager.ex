@@ -52,4 +52,13 @@ defmodule ElixirPlanningPoker.RoomManager do
       [] -> {:error, :room_not_found}
     end
   end
+
+  def change_room_config(room_code, config_params) do
+    case Registry.lookup(ElixirPlanningPoker.RoomRegistry, room_code) do
+      [{_pid, _}] ->
+        ElixirPlanningPoker.Room.change_room_config(room_code, config_params)
+
+      [] -> {:error, :room_not_found}
+    end
+  end
 end
