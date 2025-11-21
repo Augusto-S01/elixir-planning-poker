@@ -1,19 +1,20 @@
 defmodule ElixirPlanningPoker.User do
   @enforce_keys [:user]
-  defstruct [:name, :user, :role, :vote, :voted?]
+  defstruct [:name, :user, :role, :vote, :voted? , :observer?]
 
   @type t :: %__MODULE__{
           name: String.t(),
           user: String.t(),
-          role: :host | :participant | :observer | atom(),
+          role: :host | :participant | atom(),
           vote: integer() | nil,
+          observer?: boolean(),
           voted?: boolean()
         }
 
   @spec new(String.t(), String.t(), atom()) :: t()
   def new(user_token, name \\ "", role \\ :participant)
       when is_binary(user_token) and is_atom(role) do
-      %__MODULE__{user: user_token, name: name, role: role, vote: nil, voted?: false}
+      %__MODULE__{user: user_token, name: name, role: role, vote: nil, voted?: false, observer?: false}
   end
 
   @spec find_user([map()], String.t()) :: {:ok, map()} | {:error, :not_found}

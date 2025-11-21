@@ -47,6 +47,13 @@ defmodule ElixirPlanningPokerWeb.RoomLive do
   end
 
   defp assign_forms(socket,state) do
+    socket
+    |> assign_form_ask_name(state)
+    |> assign_room_config_form(state)
+    |> assign_new_story_form()
+  end
+
+  defp assign_form_ask_name(socket, state) do
     form_ask_name =
       case User.find_user(state.users, socket.assigns.user_token) do
         {:ok, user} ->
@@ -58,7 +65,12 @@ defmodule ElixirPlanningPokerWeb.RoomLive do
 
     socket
     |> assign(:modal_ask_name_form, form_ask_name)
-    |> assign_room_config_form(state)
+  end
+
+  defp assign_new_story_form(socket) do
+    socket
+    |> assign(:new_story_form,
+        to_form(%{"title" => "", "description" => ""}, as: :story))
   end
 
   defp assign_room_config_form(socket, state) do
@@ -192,6 +204,18 @@ defmodule ElixirPlanningPokerWeb.RoomLive do
         socket = put_flash(socket, :error, "Cannot select card in the current state.")
         {:noreply, socket}
     end
+  end
+
+  def handle_event("observer-switch", _, socket) do
+    RoomManager.change_observer_status(
+      socket.assigns.room_code,
+      socket.assigns.user_token,
+      not Enum.find(
+        socket.assigns.room.users,
+        fn u -> u.user == socket.assigns.user_token end
+        ).observer?
+      )
+    {:noreply, socket}
   end
 
   def handle_event(_, _, socket), do: {:noreply, socket}

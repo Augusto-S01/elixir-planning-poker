@@ -1,5 +1,4 @@
 <main class="flex min-h-screen flex-col items-center justify-center p-24">
-  <button phx-click="teste">Testeeee</button>
   <span>
     ️Users:
     <%= for user <- @room.users do %>
@@ -7,12 +6,18 @@
       <p>role: {user.role}</p>
       <p>user: {user.user}</p>
       <p>voted?: {user.voted?}</p>
+      <p>observer?: {user.observer?}</p>
     <% end %>
   </span>
   <p>ask : {@modal_ask_name}</p>
   <div>
     State: {@room.state}
-    <button phx-click="alter-status" phx-value-status="voting" class="btn">Start Voting</button>
+    <.button phx-click="alter-status" phx-value-status="waiting" type="button" class="btn" value="Set Waiting">Set Waiting</.button>
+    <.button phx-click="alter-status" phx-value-status="voting" type="button" class="btn" value="Start Voting">Start Voting</.button>
+  </div>
+  <div>
+    Observer Status:
+    <.button phx-click="observer-switch" class="btn">Switch observer status</.button>
   </div>
   <div>
     Cards:
@@ -20,8 +25,38 @@
       <p phx-click="select-card" class="cursor-pointer btn" phx-value-card={card}>Card: {card}</p>
     <% end %>
   </div>
+
+  <div>
+    Stories: 
+  <%= if @room.stories == [] do %>
+    <p>No stories yet</p>
+  <% else %>
+    <%= for story <- @room.stories do %>
+      <p>Title: {story.title} - Description: {story.description}</p>
+      <.button phx-click="select-story" phx-value-story-id={story.id} class="btn">Select Story</.button>
+      <.button phx-click="remove-story" phx-value-story-id={story.id} class="btn btn-secondary">Remove Story</.button>
+    <% end %>
+  <% end %>
+  </div>
+
+  <div>
+    Stories actions:
+    <.form phx-submit="add-story" for={@new_story_form} as={:story} class="flex flex-col gap-2 mb-4">
+      <div>
+        <.input type="text" name="title" label="Title" class="w-full" value={@new_story_form[:title].value}/>
+      </div>
+      <div>
+        <.input type="textarea" name="description" label="Description" class="w-full"  value={@new_story_form[:description].value}/>
+      </div>
+      <.button type="submit" class="btn btn-primary mt-2">Add Story</.button>
+    </.form>
+
+    <hr/>
+  </div>
+
+
   <%= if User.is_host?(@room.users, @user_token) do %>
-    <button phx-click="open-room-config" class="btn btn-secondary mt-4">Open Room Config</button>
+    <.button phx-click="open-room-config" class="btn btn-secondary mt-4">Open Room Config</.button>
   <% end %>
 </main>
 

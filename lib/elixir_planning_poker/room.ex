@@ -43,6 +43,10 @@ defmodule ElixirPlanningPoker.Room do
     GenServer.cast(via(room_code), {:change_room_config, config_params})
   end
 
+  def change_observer_status(room_code, user_token, new_observer_status) do
+    GenServer.cast(via(room_code), {:change_observer_status, user_token, new_observer_status})
+  end
+
   # Server Callbacks
   @impl true
   def init(opts) do
@@ -135,7 +139,20 @@ defmodule ElixirPlanningPoker.Room do
     {:noreply, new_state}
   end
 
-
+  @impl true
+  def handle_cast({:change_observer_status, user_token, new_observer_status}, state) do
+    updated_users =
+      Enum.map(state.users, fn user ->
+        if user.user == user_token do
+          %{user | observer?: new_observer_status}
+        else
+          user
+        end
+      end)
+    new_state = %{state | users: updated_users}
+    notify_users_updated(new_state)
+    {:noreply, new_state}
+  end
 
 
   @impl true

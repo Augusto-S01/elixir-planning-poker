@@ -61,4 +61,13 @@ defmodule ElixirPlanningPoker.RoomManager do
       [] -> {:error, :room_not_found}
     end
   end
+
+  def change_observer_status(room_code, user_token, new_observer_status) do
+    case Registry.lookup(ElixirPlanningPoker.RoomRegistry, room_code) do
+      [{_pid, _}] ->
+        ElixirPlanningPoker.Room.change_observer_status(room_code, user_token, new_observer_status)
+
+      [] -> {:error, :room_not_found}
+    end
+  end
 end
