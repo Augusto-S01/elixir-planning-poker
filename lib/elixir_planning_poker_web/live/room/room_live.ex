@@ -2,7 +2,7 @@ defmodule ElixirPlanningPokerWeb.RoomLive do
   use ElixirPlanningPokerWeb, :live_view
   import ElixirPlanningPokerWeb.ModalComponent
   import ElixirPlanningPokerWeb.CoreComponents
-  alias ElixirPlanningPoker.{RoomManager, User}
+  alias ElixirPlanningPoker.{RoomManager, User, NewStory}
 
   @close_modal_ask_name "close_modal_ask_name"
   @close_room_config "close_room_config"
@@ -68,10 +68,12 @@ defmodule ElixirPlanningPokerWeb.RoomLive do
   end
 
   defp assign_new_story_form(socket) do
+    changeset = NewStory.changeset(%NewStory{}, %{})
+
     socket
-    |> assign(:new_story_form,
-        to_form(%{"title" => "", "description" => ""}, as: :story))
+    |> assign(:new_story_form, to_form(changeset, as: :story))
   end
+
 
   defp assign_room_config_form(socket, state) do
     socket
@@ -218,7 +220,40 @@ defmodule ElixirPlanningPokerWeb.RoomLive do
     {:noreply, socket}
   end
 
+  def handle_event("validate-story-form", %{"story" => story_params}, socket) do
+    changeset =
+      %NewStory{}
+      |> NewStory.changeset(story_params)
+      |> Map.put(:action, :validate)
+
+    {:noreply,
+    socket
+    |> assign(:new_story_form, to_form(changeset, as: :story))}
+  end
+
+  def handle_event("add-story", %{"story" => story_params}, socket) do
+    changeset = NewStory.changeset(%NewStory{}, story_params)
+    IO.inspect(changeset.changes, label: "New story changeset")
+    if changeset.valid? do
+      RoomManager.add_story(socket.assigns.room_code, changeset.changes)
+      {:noreply,
+      socket
+      |> assign_new_story_form()}
+    else
+      {:noreply,
+      socket
+      |> assign(:new_story_form, to_form(changeset, as: :story))}
+    end
+  end
+
+  def handle_event("teste", _params, socket) do
+    IO.inspect(socket.assigns.room.stories, label: "Current stories")
+    {:noreply, socket}
+  end
+
+
   def handle_event(_, _, socket), do: {:noreply, socket}
+
 
   # --- info handlers ---
   @impl true

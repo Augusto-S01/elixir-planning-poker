@@ -70,4 +70,13 @@ defmodule ElixirPlanningPoker.RoomManager do
       [] -> {:error, :room_not_found}
     end
   end
+
+  def add_story(room_code, story_params) do
+    case Registry.lookup(ElixirPlanningPoker.RoomRegistry, room_code) do
+      [{_pid, _}] ->
+        ElixirPlanningPoker.Room.add_story(room_code, story_params)
+
+      [] -> {:error, :room_not_found}
+    end
+  end
 end

@@ -27,7 +27,7 @@
   </div>
 
   <div>
-    Stories: 
+    <span phx-click="teste"> Stories: </span> 
   <%= if @room.stories == [] do %>
     <p>No stories yet</p>
   <% else %>
@@ -41,14 +41,23 @@
 
   <div>
     Stories actions:
-    <.form phx-submit="add-story" for={@new_story_form} as={:story} class="flex flex-col gap-2 mb-4">
+    <.form
+      for={@new_story_form}
+      phx-submit="add-story"
+      phx-change="validate-story-form"
+      class="flex flex-col gap-2 mb-4"
+    >
       <div>
-        <.input type="text" name="title" label="Title" class="w-full" value={@new_story_form[:title].value}/>
+        <.input field={@new_story_form[:title]} label="Title" class="w-full" />
       </div>
+
       <div>
-        <.input type="textarea" name="description" label="Description" class="w-full"  value={@new_story_form[:description].value}/>
+        <.input field={@new_story_form[:description]} type="textarea" label="Description" class="w-full" />
       </div>
-      <.button type="submit" class="btn btn-primary mt-2">Add Story</.button>
+
+      <.button type="submit" class="btn btn-primary mt-2">
+        Add Story
+      </.button>
     </.form>
 
     <hr/>

@@ -47,6 +47,10 @@ defmodule ElixirPlanningPoker.Room do
     GenServer.cast(via(room_code), {:change_observer_status, user_token, new_observer_status})
   end
 
+  def add_story(room_code, story_params) do
+    GenServer.cast(via(room_code), {:add_story, story_params})
+  end
+
   # Server Callbacks
   @impl true
   def init(opts) do
@@ -89,6 +93,18 @@ defmodule ElixirPlanningPoker.Room do
       false ->
         state
     end
+    {:noreply, new_state}
+  end
+
+  @impl true
+  def handle_cast({:add_story, story_params}, state) do
+    new_story = %{
+      id: Enum.count(state.stories) + 1,
+      title: Map.get(story_params, :title, ""),
+      description: Map.get(story_params, :description, "")
+    }
+
+    new_state = %{state | stories: state.stories ++ [new_story]}
     {:noreply, new_state}
   end
 
