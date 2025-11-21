@@ -233,17 +233,22 @@ defmodule ElixirPlanningPokerWeb.RoomLive do
 
   def handle_event("add-story", %{"story" => story_params}, socket) do
     changeset = NewStory.changeset(%NewStory{}, story_params)
-    IO.inspect(changeset.changes, label: "New story changeset")
     if changeset.valid? do
       RoomManager.add_story(socket.assigns.room_code, changeset.changes)
       {:noreply,
       socket
       |> assign_new_story_form()}
     else
-      {:noreply,
       socket
-      |> assign(:new_story_form, to_form(changeset, as: :story))}
+      |> assign(:new_story_form, to_form(changeset, as: :story))
+      |> put_flash(:error, "Invalid story title.")
+      |> then(&{:noreply, &1})
     end
+  end
+
+  def handle_event("remove-story",%{"story-id" => story_id}, socket) do
+    RoomManager.remove_story(socket.assigns.room_code, String.to_integer(story_id))
+    {:noreply, socket}
   end
 
   def handle_event("teste", _params, socket) do

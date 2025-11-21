@@ -8,6 +8,7 @@ defmodule ElixirPlanningPoker.Room do
     :custom_deck,
     :users,
     :stories,
+    :story_counter,
     :current_story,
     :state,
     :cards,
@@ -51,6 +52,10 @@ defmodule ElixirPlanningPoker.Room do
     GenServer.cast(via(room_code), {:add_story, story_params})
   end
 
+  def remove_story(room_code, story_id) do
+    GenServer.cast(via(room_code), {:remove_story, story_id})
+  end
+
   # Server Callbacks
   @impl true
   def init(opts) do
@@ -63,6 +68,7 @@ defmodule ElixirPlanningPoker.Room do
       current_story: nil,
       state: :waiting,
       cards: get_cards_from_deck(opts[:deck_type], opts[:custom_deck]),
+      story_counter: 0,
       room_code: opts[:room_code]
     }
 
@@ -99,12 +105,20 @@ defmodule ElixirPlanningPoker.Room do
   @impl true
   def handle_cast({:add_story, story_params}, state) do
     new_story = %{
-      id: Enum.count(state.stories) + 1,
+      id: state.story_counter + 1,
       title: Map.get(story_params, :title, ""),
       description: Map.get(story_params, :description, "")
     }
 
-    new_state = %{state | stories: state.stories ++ [new_story]}
+    new_state = %{state | stories: state.stories ++ [new_story], story_counter: state.story_counter + 1}
+    notify_room_stories_updated(new_state)
+    {:noreply, new_state}
+  end
+
+  @impl true
+  def handle_cast({:remove_story, story_id}, state) do
+    new_stories = Enum.filter(state.stories, fn story -> story.id != story_id end)
+    new_state = %{state | stories: new_stories}
     notify_room_stories_updated(new_state)
     {:noreply, new_state}
   end
@@ -170,7 +184,6 @@ defmodule ElixirPlanningPoker.Room do
     notify_users_updated(new_state)
     {:noreply, new_state}
   end
-
 
   @impl true
   def handle_call(:get_state, _from, state), do: {:reply, state, state}

@@ -79,4 +79,13 @@ defmodule ElixirPlanningPoker.RoomManager do
       [] -> {:error, :room_not_found}
     end
   end
+
+  def remove_story(room_code, story_id) do
+    case Registry.lookup(ElixirPlanningPoker.RoomRegistry, room_code) do
+      [{_pid, _}] ->
+        ElixirPlanningPoker.Room.remove_story(room_code, story_id)
+
+      [] -> {:error, :room_not_found}
+    end
+  end
 end
