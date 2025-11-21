@@ -56,6 +56,11 @@ defmodule ElixirPlanningPoker.Room do
     GenServer.cast(via(room_code), {:remove_story, story_id})
   end
 
+  def calculate_results(room_code) do
+    GenServer.cast(via(room_code), {:calculate_results})
+  end
+
+
   # Server Callbacks
   @impl true
   def init(opts) do
@@ -183,6 +188,20 @@ defmodule ElixirPlanningPoker.Room do
     new_state = %{state | users: updated_users}
     notify_users_updated(new_state)
     {:noreply, new_state}
+  end
+
+  @impl true
+  def handle_cast({:calculate_results}, state) do
+    IO.inspect("Calculating results...", label: "Calculate Results")
+
+    if state.state == :voting do
+      votes =
+        state.users
+        |> Enum.filter(fn user -> not user.observer? and not is_nil(user.vote) end)
+        |> Enum.map(& &1.vote)
+    end
+
+    {:noreply, state}
   end
 
   @impl true

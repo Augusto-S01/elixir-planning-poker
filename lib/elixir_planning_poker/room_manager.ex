@@ -88,4 +88,13 @@ defmodule ElixirPlanningPoker.RoomManager do
       [] -> {:error, :room_not_found}
     end
   end
+
+  def calculate_results(room_code) do
+    case Registry.lookup(ElixirPlanningPoker.RoomRegistry, room_code) do
+      [{_pid, _}] ->
+        ElixirPlanningPoker.Room.calculate_results(room_code)
+
+      [] -> {:error, :room_not_found}
+    end
+  end
 end

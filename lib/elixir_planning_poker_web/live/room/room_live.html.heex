@@ -66,6 +66,7 @@
 
   <%= if User.is_host?(@room.users, @user_token) do %>
     <.button phx-click="open-room-config" class="btn btn-secondary mt-4">Open Room Config</.button>
+    <.button phx-click="calculate-results" class="btn btn-primary mt-4">Calculate Results</.button>
   <% end %>
 </main>
 

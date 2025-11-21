@@ -74,7 +74,6 @@ defmodule ElixirPlanningPokerWeb.RoomLive do
     |> assign(:new_story_form, to_form(changeset, as: :story))
   end
 
-
   defp assign_room_config_form(socket, state) do
     socket
     |> assign(:form_room_config, %{
@@ -251,14 +250,17 @@ defmodule ElixirPlanningPokerWeb.RoomLive do
     {:noreply, socket}
   end
 
+  def handle_event("calculate-results", _params, socket) do
+    RoomManager.calculate_results(socket.assigns.room_code)
+    {:noreply, socket}
+  end
+
   def handle_event("teste", _params, socket) do
     IO.inspect(socket.assigns.room.stories, label: "Current stories")
     {:noreply, socket}
   end
 
-
   def handle_event(_, _, socket), do: {:noreply, socket}
-
 
   # --- info handlers ---
   @impl true
