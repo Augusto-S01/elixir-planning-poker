@@ -2,8 +2,7 @@ defmodule ElixirPlanningPokerWeb.HomeLive do
   use ElixirPlanningPokerWeb, :live_view
 
   import ElixirPlanningPokerWeb.Components.Swiper
-  import ElixirPlanningPokerWeb.Components.RoomConfigModal
-  alias ElixirPlanningPoker.{RoomManager, User}
+  alias ElixirPlanningPoker.{RoomManager, User, RoomConfig}
   import ElixirPlanningPokerWeb.Utils
   alias ElixirPlanningPokerWeb.Components.Icon
 
@@ -44,23 +43,7 @@ defmodule ElixirPlanningPokerWeb.HomeLive do
     {:noreply, assign(socket, :show_room_config_modal, false)}
   end
 
-  def handle_event(@validate_room_config, params, socket) do
-    IO.inspect(params, label: "Room config params async")
-    {:noreply, socket}
-  end
-
-  def handle_event(@submit_room_config, params, socket) do
-    IO.inspect(params, label: "Room config params async submit")
-    {:noreply, socket}
-  end
-
-  def handle_event("validate", %{"room" => room_params}, socket) do
-    form = to_form(room_params, as: :room)
-    {:noreply, assign(socket, :form, form)}
-  end
-
-  def handle_event("submit", %{"room" => params}, socket) do
-    params = atomize_keys(params)
+  def handle_info({@submit_room_config, params}, socket) do
     user =
       socket.assigns.user_token
       |> User.new(params[:user_name] || "", :host)
@@ -83,10 +66,6 @@ defmodule ElixirPlanningPokerWeb.HomeLive do
          |> put_flash(:error, "Error creating room: #{inspect(reason)}")
          |> push_navigate(to: "/")}
     end
-  end
-
-  def handle_event("ignore_click", _params, socket) do
-    {:noreply, socket}
   end
 
   defp generate_room_code do

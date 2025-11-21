@@ -14,25 +14,30 @@ defmodule ElixirPlanningPokerWeb.ModalComponent do
     <div
       :if={@show}
       class="modal modal-open bg-black/50 backdrop-blur-sm"
-      phx-click={@cancelable && @close_event}
     >
       <div
         class="modal-box max-w-2xl bg-base-100 text-base-content shadow-2xl border border-base-300 relative"
-        phx-click="ignore_click"
       >
         <%= if @title do %>
           <h3 class="font-bold text-lg mb-4 text-primary">{@title}</h3>
         <% end %>
 
-    <!-- corpo (inner_block padrão) -->
         {render_slot(@inner_block)}
 
-    <!-- footer opcional -->
         {footer_render(assigns)}
       </div>
+
+      <button
+        :if={@cancelable}
+        type="button"
+        phx-click={@close_event}
+        class="modal-backdrop"
+      >
+      </button>
     </div>
     """
   end
+
 
   defp footer_render(assigns) do
     case assigns.footer do

@@ -47,17 +47,19 @@
         type="text"
         field={f[:name]}
         class="input input-bordered w-full"
-        required
       />
     </div>
   </.form>
 </.modal>
 
-
-
-<.room_config_modal form={@form_room_config} show={@show_room_config_modal} close_event={@close_room_config} submit_event={@submit_room_config} validate_event={@validate_room_config} />
-
-
+<.live_component
+  module={ElixirPlanningPokerWeb.Components.RoomConfigModal}
+  data={@form_room_config}
+  id="room-config"
+  show={@show_room_config_modal}
+  close_event="close_room_config"
+  submit_event="submit_room_config"
+/>
 
 <ElixirPlanningPokerWeb.Layouts.flash_group flash={@flash} />
 <Layouts.theme_toggle />

@@ -48,15 +48,12 @@ defmodule ElixirPlanningPokerWeb.RoomLive do
   end
 
   defp assign_forms(socket,state) do
-    room_config_form =
-      ElixirPlanningPoker.RoomConfig
-      |> struct(%{
+    IO.inspect(state, label: "Room state in assign_forms")
+    room_config_form = %{
           name: state.name,
           deck_type: state.deck_type,
-          custom_deck: state.custom_deck
-        })
-      |> ElixirPlanningPoker.RoomConfig.changeset()
-      |> to_form(as: :room)
+          custom_deck: state.custom_deck || ""
+        }
 
     form_ask_name =
       case User.find_user(state.users, socket.assigns.user_token) do

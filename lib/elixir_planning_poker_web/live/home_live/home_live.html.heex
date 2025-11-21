@@ -45,17 +45,14 @@
 </main>
 
 
-<.room_config_modal 
-  form={@form} 
-  show={@show_room_config_modal} 
-  close_event={@close_room_config} 
-  validate_event={@validate_room_config}
-  submit_event={@submit_room_config}
-  />
+<.live_component
+  module={ElixirPlanningPokerWeb.Components.RoomConfigModal}
+  id="room-config"
+  show={@show_room_config_modal}
+  close_event={@close_room_config}
+  submit_event="submit_room_config"
+/>
 
+<ElixirPlanningPokerWeb.Layouts.flash_group flash={@flash} />
 
 <Layouts.theme_toggle />
-<ElixirPlanningPokerWeb.Layouts.flash_group flash={@flash} />
-<div class="color-base-300 color-primary">
-<Icon.icon name="naipe" class="w-8 h-8" />
-</div>

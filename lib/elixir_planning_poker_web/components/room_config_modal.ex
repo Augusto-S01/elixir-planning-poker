@@ -1,29 +1,81 @@
 defmodule ElixirPlanningPokerWeb.Components.RoomConfigModal do
-  use Phoenix.Component
+  use Phoenix.LiveComponent
 
   import ElixirPlanningPokerWeb.CoreComponents
   import ElixirPlanningPokerWeb.ModalComponent
+  alias ElixirPlanningPoker.RoomConfig
 
-  attr :form, :any, required: true
-  attr :show, :boolean, required: true
-  attr :close_event, :string, required: true
-  attr :submit_event, :string, default: "submit"
-  attr :validate_event, :string, default: "validate"
+  def update(assigns, socket) do
+    submit_event = Map.get(assigns, :submit_event, "submit_room_config")
+    close_event = Map.get(assigns, :close_event, "close_room_config")
 
+    data = Map.get(assigns, :data, %{})
 
+    changeset =
+      socket.assigns[:changeset] ||
+        RoomConfig.changeset(%RoomConfig{}, data)
 
-def room_config_modal(assigns) do
-  ~H"""
-  <.modal show={@show} footer={:form}  form_id="room_form" title="Room Configuration" close_event={@close_event}>
-    <.form for={@form} id="room_form" phx-change="teste" phx-submit={@submit_event} class="space-y-4">
-      <div>
+    {:ok,
+    socket
+    |> assign(assigns)
+    |> assign(:changeset, changeset)
+    |> assign(:form, to_form(changeset))
+    |> assign(:submit_event, submit_event)
+    |> assign(:close_event, close_event)}
+  end
+
+  def handle_event("validate", %{"room_config" => params}, socket) do
+    changeset =
+      socket.assigns.changeset.data
+      |> RoomConfig.changeset(params)
+      |> Map.put(:action, :validate)
+
+      form = to_form(changeset, as: :room_config)
+    {:noreply,
+    socket
+    |> assign(:changeset, changeset)
+    |> assign(:form, form)}
+  end
+
+  def handle_event("internal_submit_room_config", params, socket) do
+    params = Map.get(params, "room_config", %{})
+    changeset =
+      %RoomConfig{}
+      |> RoomConfig.changeset(params)
+
+    if changeset.valid? do
+      send(self(), {socket.assigns.submit_event, changeset.changes})
+    end
+    {:noreply, socket}
+  end
+
+  def render(assigns) do
+    ~H"""
+    <div>
+    <.modal
+      show={@show}
+      footer={:form}
+      form_id="room_form"
+      title="Room Configuration"
+      close_event={assigns.close_event}
+    >
+
+      <.form
+        for={@form}
+        as={:room_config}
+        id="room_form"
+        phx-change="validate"
+        phx-submit={"internal_submit_room_config"}
+        phx-target={@myself}
+        class="space-y-4"
+      >
         <.input
-          type="text"
           field={@form[:name]}
-          value={@form[:name].value}
-          required
+          type="text"
           label="Room Name"
-          />
+          placeholder="Enter room name"
+        />
+
         <.input
           field={@form[:deck_type]}
           type="select"
@@ -36,29 +88,18 @@ def room_config_modal(assigns) do
           ]}
         />
 
-
-        <%= if @form[:deck_type].value == "custom"  do %>
+        <%= if @form[:deck_type].value == "custom" do %>
           <.input
-            type="text"
             field={@form[:custom_deck]}
-            value={@form[:custom_deck].value}
+            type="text"
             placeholder="1,2,3,5,8,13"
-            label="Custom Deck (Comma separated values)"
-            />
-
+            label="Custom Deck (comma separated)"
+          />
         <% end %>
-      </div>
-    </.form>
-  </.modal>
-  """
-end
 
-def handle_event("teste", params, socket) do
-  IO.inspect(params, label: "Room config params")
-  {:noreply, socket}
-end
-
-
-
-
+      </.form>
+    </.modal>
+    </div>
+    """
+  end
 end

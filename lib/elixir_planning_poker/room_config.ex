@@ -21,7 +21,7 @@ defmodule ElixirPlanningPoker.RoomConfig do
       "custom" ->
         changeset
         |> validate_required([:custom_deck])
-        |> validate_format(:custom_deck, ~r/^[^,]+(,[^,]+)*$/, message: "must be a comma-separated list")
+        |> validate_format(:custom_deck, ~r/^[^,]+(,[^,]+)+$/,  message: "must contain at least two comma-separated values")
       _ ->
         changeset
     end
