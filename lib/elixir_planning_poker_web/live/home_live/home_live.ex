@@ -2,8 +2,7 @@ defmodule ElixirPlanningPokerWeb.HomeLive do
   use ElixirPlanningPokerWeb, :live_view
 
   import ElixirPlanningPokerWeb.Components.Swiper
-  alias ElixirPlanningPoker.{RoomManager, User, RoomConfig}
-  import ElixirPlanningPokerWeb.Utils
+  alias ElixirPlanningPoker.{RoomManager, User}
   alias ElixirPlanningPokerWeb.Components.Icon
 
   @close_room_config "close_room_config"

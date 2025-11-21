@@ -2,7 +2,6 @@ defmodule ElixirPlanningPokerWeb.RoomLive do
   use ElixirPlanningPokerWeb, :live_view
   import ElixirPlanningPokerWeb.ModalComponent
   import ElixirPlanningPokerWeb.CoreComponents
-  import ElixirPlanningPokerWeb.Components.RoomConfigModal
   alias ElixirPlanningPoker.{RoomManager, User}
 
   @close_modal_ask_name "close_modal_ask_name"

@@ -14,6 +14,7 @@ defmodule ElixirPlanningPokerWeb.Components.RoomConfigModal do
     changeset =
       socket.assigns[:changeset] ||
         RoomConfig.changeset(%RoomConfig{}, data)
+      |> to_form(as: :room_config)
 
     {:ok,
     socket
