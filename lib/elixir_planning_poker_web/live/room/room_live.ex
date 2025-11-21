@@ -291,6 +291,14 @@ defmodule ElixirPlanningPokerWeb.RoomLive do
   end
 
   @impl true
+  def handle_info({:room_stories_updated, stories}, socket) do
+    socket
+    |> assign(:room, %{socket.assigns.room | stories: stories})
+    |> put_flash(:info, "Room stories updated.")
+    |> then(&{:noreply, &1})
+  end
+
+  @impl true
   def handle_info({:room_config_changed, new_config}, socket) do
     socket
     |> assign(:room, Map.merge(socket.assigns.room, new_config))

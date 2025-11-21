@@ -105,6 +105,7 @@ defmodule ElixirPlanningPoker.Room do
     }
 
     new_state = %{state | stories: state.stories ++ [new_story]}
+    notify_room_stories_updated(new_state)
     {:noreply, new_state}
   end
 
@@ -230,6 +231,14 @@ defmodule ElixirPlanningPoker.Room do
       ElixirPlanningPoker.PubSub,
       "room:#{state.room_code}",
       {:room_config_changed, state}
+    )
+  end
+
+  defp notify_room_stories_updated(state) do
+    Phoenix.PubSub.broadcast(
+      ElixirPlanningPoker.PubSub,
+      "room:#{state.room_code}",
+      {:room_stories_updated, state.stories}
     )
   end
 
