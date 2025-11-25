@@ -56,8 +56,9 @@ defmodule ElixirPlanningPoker.Room do
     GenServer.cast(via(room_code), {:remove_story, story_id})
   end
 
-  def calculate_results(room_code) do
-    GenServer.cast(via(room_code), {:calculate_results})
+  def reveal_votes(room_code, opts) do
+    force? = Keyword.get(opts, :force, false)
+    GenServer.cast(via(room_code), {:reveal_votes, force?})
   end
 
 
@@ -191,17 +192,8 @@ defmodule ElixirPlanningPoker.Room do
   end
 
   @impl true
-  def handle_cast({:calculate_results}, state) do
-    IO.inspect("Calculating results...", label: "Calculate Results")
+  def handle_cast({:reveal_votes, force?}, state) do
 
-    if state.state == :voting do
-      votes =
-        state.users
-        |> Enum.filter(fn user -> not user.observer? and not is_nil(user.vote) end)
-        |> Enum.map(& &1.vote)
-    end
-
-    {:noreply, state}
   end
 
   @impl true
@@ -229,6 +221,30 @@ defmodule ElixirPlanningPoker.Room do
       _ ->
         []
     end
+  end
+
+
+  @impl true
+  def handle_call({:reveal_votes, force?}, _from, state) do
+    room = state.room
+
+    cond do
+      all_voted?(room) or force? ->
+        new_room = Room.reveal_votes(room)
+        {:reply, :revealed, %{state | room: new_room}}
+
+      true ->
+        pending_users = pending_users(room)
+        {:reply, {:need_confirmation, pending_users}, state}
+    end
+  end
+
+  defp all_voted?(room) do
+    Enum.all?(room.users, & &1.vote)
+  end
+
+  defp pending_users(room) do
+    Enum.filter(room.users, &is_nil(&1.vote))
   end
 
   # Helper notifications

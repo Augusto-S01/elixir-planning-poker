@@ -250,10 +250,6 @@ defmodule ElixirPlanningPokerWeb.RoomLive do
     {:noreply, socket}
   end
 
-  def handle_event("calculate-results", _params, socket) do
-    RoomManager.calculate_results(socket.assigns.room_code)
-    {:noreply, socket}
-  end
 
   def handle_event("teste", _params, socket) do
     IO.inspect(socket.assigns.room.stories, label: "Current stories")
