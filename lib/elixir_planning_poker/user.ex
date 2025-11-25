@@ -41,6 +41,10 @@ defmodule ElixirPlanningPoker.User do
     |> Ecto.Changeset.validate_required([:name])
   end
 
+  def fetch(%__MODULE__{} = user, field) when field in [:name, :user, :role, :vote, :voted?, :observer?] do
+    Map.get(user, field)
+  end
+
 
   def set_vote(%__MODULE__{} = user, vote) do
     %{user | vote: vote, voted?: !is_nil(vote)}

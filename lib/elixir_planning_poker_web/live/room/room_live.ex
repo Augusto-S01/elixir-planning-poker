@@ -245,16 +245,35 @@ defmodule ElixirPlanningPokerWeb.RoomLive do
     end
   end
 
+  def handle_event("select-story", %{"story-id" => story_id}, socket) do
+    RoomManager.select_story(socket.assigns.room_code, String.to_integer(story_id))
+    {:noreply, socket}
+  end
+
   def handle_event("remove-story",%{"story-id" => story_id}, socket) do
     RoomManager.remove_story(socket.assigns.room_code, String.to_integer(story_id))
     {:noreply, socket}
   end
 
 
-  def handle_event("teste", _params, socket) do
-    IO.inspect(socket.assigns.room.stories, label: "Current stories")
+  def handle_event("reveal-votes", %{"force" => force_str}, socket) do
+    force? = force_str == "true"
+
+    result = RoomManager.reveal_votes(socket.assigns.room_code, force?)
+
+    IO.inspect(force?, label: "Force reveal votes parsed")
+    IO.inspect(result, label: "Reveal votes result")
+
     {:noreply, socket}
   end
+
+  def handle_event("confirm-reveal-votes", params , socket) do
+    decisive_vote = Map.get(params, "vote", nil)
+    IO.inspect(decisive_vote, label: "Decisive vote selected")
+    RoomManager.confirm_reveal_votes(socket.assigns.room_code, decisive_vote)
+    {:noreply, socket}
+  end
+
 
   def handle_event(_, _, socket), do: {:noreply, socket}
 
@@ -308,6 +327,46 @@ defmodule ElixirPlanningPokerWeb.RoomLive do
     |> assign_room_config_form(socket.assigns.room)
     |> put_flash(:info, "Room configuration updated.")
     |> then(&{:noreply, &1})
+  end
+
+  @impl true
+  def handle_info({:room_revealed, results}, socket) do
+    socket
+    |> assign(:room, %{socket.assigns.room | state: :revealed})
+    |> assign(:results, results)
+    |> put_flash(:info, "Votes have been revealed.")
+    |> then(&{:noreply, &1})
+  end
+
+  @impl true
+  def handle_info({:room_story_selected, story_id}, socket) do
+    story_name =
+      socket.assigns.room.stories
+      |> Enum.find(fn story -> story.id == story_id end)
+      |> Map.get(:title, "Unknown Story")
+
+    socket
+    |> assign(:room, %{socket.assigns.room | current_story: story_id})
+    |> put_flash(:info, "Story #{story_name} has been selected.")
+    |> then(&{:noreply, &1})
+  end
+
+  @impl true
+  def handle_info({:room_confirmed_reveal_votes, new_state}, socket) do
+    decisive_vote =
+      new_state.stories
+      |> Enum.find(&(&1.id == new_state.current_story))
+      |> case do
+        nil -> "none"
+        story -> story.decisive_vote
+      end
+
+    socket =
+      socket
+      |> assign(:room, new_state)
+      |> put_flash(:info, "Decisive vote confirmed: #{decisive_vote}")
+
+    {:noreply, socket}
   end
 
 end

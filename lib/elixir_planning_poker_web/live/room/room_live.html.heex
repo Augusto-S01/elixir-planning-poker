@@ -66,7 +66,9 @@
 
   <%= if User.is_host?(@room.users, @user_token) do %>
     <.button phx-click="open-room-config" class="btn btn-secondary mt-4">Open Room Config</.button>
-    <.button phx-click="calculate-results" class="btn btn-primary mt-4">Calculate Results</.button>
+    <.button phx-click="reveal-votes" phx-value-force={"false"}class="btn btn-primary mt-4">Calculate Results</.button>
+    <.button phx-click="reveal-votes" phx-value-force={"true"} class="btn btn-warning mt-4">Force Reveal Votes</.button>
+    <.button phx-click="confirm-reveal-votes" class="btn btn-success mt-4">Confirm Reveal Votes</.button>
   <% end %>
 </main>
 

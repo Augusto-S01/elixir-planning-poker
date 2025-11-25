@@ -80,6 +80,16 @@ defmodule ElixirPlanningPoker.RoomManager do
     end
   end
 
+  def select_story(room_code, story_id) do
+    IO.inspect("select_story called", label: "Select Story API")
+    case Registry.lookup(ElixirPlanningPoker.RoomRegistry, room_code) do
+      [{_pid, _}] ->
+        ElixirPlanningPoker.Room.select_story(room_code, story_id)
+
+      [] -> {:error, :room_not_found}
+    end
+  end
+
   def remove_story(room_code, story_id) do
     case Registry.lookup(ElixirPlanningPoker.RoomRegistry, room_code) do
       [{_pid, _}] ->
@@ -89,10 +99,19 @@ defmodule ElixirPlanningPoker.RoomManager do
     end
   end
 
-  def reveal_votes(room_code, opts \\ []) do
+  def reveal_votes(room_code, force? \\ false) do
     case Registry.lookup(ElixirPlanningPoker.RoomRegistry, room_code) do
       [{_pid, _}] ->
-        ElixirPlanningPoker.Room.reveal_votes(room_code, opts)
+        ElixirPlanningPoker.Room.reveal_votes(room_code, force?)
+
+      [] -> {:error, :room_not_found}
+    end
+  end
+
+  def confirm_reveal_votes(room_code, decisive_vote) do
+    case Registry.lookup(ElixirPlanningPoker.RoomRegistry, room_code) do
+      [{_pid, _}] ->
+        ElixirPlanningPoker.Room.confirm_reveal_votes(room_code, decisive_vote)
 
       [] -> {:error, :room_not_found}
     end
