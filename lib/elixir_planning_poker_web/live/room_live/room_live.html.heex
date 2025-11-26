@@ -1,0 +1,248 @@
+<header class="border-b border-base-300 bg-base-100 px-6 py-3 flex items-center justify-between gap-4" phx-hook="CopyToClipboard" id="room-header">
+    <div class="flex items-center gap-10">
+      <div class="flex flex-col">
+        <span class="text-[11px] uppercase tracking-wide text-base-content/60">
+          Room
+        </span>
+        <span class="text-lg font-semibold text-base-content">
+          {@room.name}
+        </span>
+      </div>
+
+      <div class="tooltip tooltip-bottom" data-tip="Copy room link">
+        <span
+          id="copy-room-link-btn"
+          phx-click="copy-room-code"
+          class="inline-flex items-center gap-2 px-3 py-1.5 rounded-md font-mono text-sm
+                bg-base-200 hover:bg-base-300 text-base-content
+                cursor-pointer select-none
+                transition-all duration-300 ease-out hover:shadow-md hover:shadow-primary/30
+                hover:scale-[1.03] active:scale-[0.97]"
+        >
+          <span>Code: {@room_code}</span>
+
+          <svg xmlns="http://www.w3.org/2000/svg"
+              class="w-4 h-4 opacity-70 group-hover:opacity-100 transition-opacity"
+              viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <rect x="9" y="9" width="13" height="13" rx="2" ry="2" ry="2" stroke-width="2"/>
+            <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" stroke-width="2"/>
+          </svg>
+        </span>
+      </div>
+
+
+    </div>
+
+    <div class="flex items-center gap-4">
+      <!-- Host Panel -->
+      <%= if User.is_host?(@room.users, @user_token) do %>
+        <div class="flex items-center gap-2">
+          <.button
+            phx-click="open-room-config"
+            class="btn btn-ghost btn-circle"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37a1.724 1.724 0 002.572-1.065z" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+          </.button>
+
+          <%= if @room.state == :waiting do %>
+            <.button
+              phx-click="alter-status"
+              phx-value-status="voting"
+              class="btn btn-primary "
+            >
+             Start Voting
+            </.button>
+          <% end %>
+
+          <%= if @room.state == :voting do %>
+            <.button
+              phx-click="reveal-votes"
+              phx-value-force={"false"}
+              class="btn btn-primary "
+              label="Start Voting"
+            >
+             Show Results
+            </.button>
+          <% end %>
+
+
+        </div>
+      <% end %>
+      
+      <!-- Profile Button (opens name/icon modal) -->
+      <%= if current_user = Enum.find(@room.users, &(&1.user == @user_token)) do %>
+        <.button
+          phx-click="open-profile-modal"
+          class="btn btn-ghost btn-circle"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        </.button>
+      <% end %>
+    </div>
+</header>
+
+<main class="flex min-h-screen flex-col items-center justify-center p-24">
+  <span>
+    ️Users:
+    <%= for user <- @room.users do %>
+      <p>name: {user.name}</p>
+      <p>role: {user.role}</p>
+      <p>user: {user.user}</p>
+      <p>voted?: {user.voted?}</p>
+      <p>observer?: {user.observer?}</p>
+    <% end %>
+  </span>
+  <p>ask : {@modal_ask_name}</p>
+  <div>
+    State: {@room.state}
+    <.button phx-click="alter-status" phx-value-status="waiting" type="button" class="btn" value="Set Waiting">Set Waiting</.button>
+    <.button phx-click="alter-status" phx-value-status="voting" type="button" class="btn" value="Start Voting">Start Voting</.button>
+  </div>
+  <div>
+    Observer Status:
+    <.button phx-click="observer-switch" class="btn">Switch observer status</.button>
+  </div>
+  <div>
+    Cards:
+    <%= for card <- @room.cards do %>
+      <p phx-click="select-card" class="cursor-pointer btn" phx-value-card={card}>Card: {card}</p>
+    <% end %>
+  </div>
+
+  <div>
+    <span phx-click="teste"> Stories: </span> 
+  <%= if @room.stories == [] do %>
+    <p>No stories yet</p>
+  <% else %>
+    <%= for story <- @room.stories do %>
+      <p>Title: {story.title} - Description: {story.description}</p>
+      <.button phx-click="select-story" phx-value-story-id={story.id} class="btn">Select Story</.button>
+      <.button phx-click="remove-story" phx-value-story-id={story.id} class="btn btn-secondary">Remove Story</.button>
+    <% end %>
+  <% end %>
+  </div>
+
+  <div>
+    Stories actions:
+    <.form
+      for={@new_story_form}
+      phx-submit="add-story"
+      phx-change="validate-story-form"
+      class="flex flex-col gap-2 mb-4"
+    >
+      <div>
+        <.input field={@new_story_form[:title]} label="Title" class="w-full" />
+      </div>
+
+      <div>
+        <.input field={@new_story_form[:description]} type="textarea" label="Description" class="w-full" />
+      </div>
+
+      <.button type="submit" class="btn btn-primary mt-2">
+        Add Story
+      </.button>
+    </.form>
+
+    <hr/>
+  </div>
+
+
+  <%= if User.is_host?(@room.users, @user_token) do %>
+    <.button phx-click="open-room-config" class="btn btn-secondary mt-4">Open Room Config</.button>
+    <.button phx-click="reveal-votes" phx-value-force={"false"}class="btn btn-primary mt-4">Calculate Results</.button>
+    <.button phx-click="reveal-votes" phx-value-force={"true"} class="btn btn-warning mt-4">Force Reveal Votes</.button>
+    <.button phx-click="confirm-reveal-votes" class="btn btn-success mt-4">Confirm Reveal Votes</.button>
+  <% end %>
+</main>
+
+<.modal
+  show={@modal_ask_name}
+  close_event={@close_modal_ask_name}
+  cancelable={false}
+  title="What's your name?"
+>
+  <:body>
+    <.form
+      for={to_form(@modal_ask_name_form, as: :user)}
+      id="user_form"
+      phx-change="validate_name"
+      phx-submit="submit_name"
+      class="space-y-4"
+      :let={f}
+    >
+      <div>
+        <label class="block text-sm font-medium mb-2">Name</label>
+        <.input
+          type="text"
+          field={f[:name]}
+          class="input input-bordered w-full"
+        />
+      </div>
+    </.form>
+  </:body>
+
+  <:footer>
+    <button
+      type="submit"
+      form="user_form"
+      class="btn btn-primary"
+    >
+      Continue
+    </button>
+  </:footer>
+</.modal>
+
+
+<.modal
+  show={@modal_confirm_reveal_votes}
+  close_event={@close_confirm_reveal_votes}
+  title="Confirm Reveal Votes"
+>
+
+  <:body>
+    <p>The following users have not voted yet:</p>
+
+    <ul class="list-disc list-inside mb-4">
+      <%= for user_name <- @pending_reveal_user do %>
+        <li>{user_name || "Unnamed User"}</li>
+      <% end %>
+    </ul>
+
+    <p>Are you sure you want to reveal the votes?</p>
+  </:body>
+
+  <:footer>
+    <button
+      phx-click="reveal-votes"
+      phx-value-force="true"
+      class="btn btn-warning"
+    >
+      Yes, Reveal Votes
+    </button>
+
+    <button
+      phx-click={@close_confirm_reveal_votes}
+      class="btn btn-ghost"
+    >
+      Cancel
+    </button>
+  </:footer>
+</.modal>
+
+
+<.live_component
+  module={ElixirPlanningPokerWeb.Components.RoomConfigModal}
+  data={@form_room_config}
+  id="room-config"
+  show={@show_room_config_modal}
+  close_event="close_room_config"
+  submit_event="submit_room_config"
+/>
+
+<ElixirPlanningPokerWeb.Layouts.flash_group flash={@flash} />
+<Layouts.theme_toggle />

@@ -8,6 +8,7 @@ defmodule ElixirPlanningPokerWeb.RoomLive do
   @close_room_config "close_room_config"
   @submit_room_config "submit_room_config"
   @validate_room_config "validate_room_config"
+  @close_confirm_reveal_votes "close_confirm_reveal_votes"
 
   @impl true
   def mount(%{"room_code" => room_code}, session, socket) do
@@ -85,6 +86,7 @@ defmodule ElixirPlanningPokerWeb.RoomLive do
 
   defp assign_base_assigns(socket, state, room_code, user_token) do
     socket
+    |> assign(:current_url, Phoenix.LiveView.get_connect_params(socket))
     |> assign(:room, state)
     |> assign(:room_code, room_code)
     |> assign(:user_token, user_token)
@@ -94,6 +96,9 @@ defmodule ElixirPlanningPokerWeb.RoomLive do
     |> assign(:close_room_config, @close_room_config)
     |> assign(:submit_room_config, @submit_room_config)
     |> assign(:validate_room_config, @validate_room_config)
+    |> assign(:close_confirm_reveal_votes, @close_confirm_reveal_votes)
+    |> assign(:modal_confirm_reveal_votes, false)
+    |> assign(:pending_reveal_user, [])
     |> assign(:show_room_config_modal, false)
     |> assign(:new_user, false)
   end
@@ -123,6 +128,8 @@ defmodule ElixirPlanningPokerWeb.RoomLive do
 
   # --- event handlers ---
 
+
+  # --- modal event handlers ---
   @impl true
   def handle_event(@close_modal_ask_name, _params, socket) do
     {:noreply, assign(socket, :modal_ask_name, false)}
@@ -159,6 +166,11 @@ defmodule ElixirPlanningPokerWeb.RoomLive do
   end
 
   @impl true
+  def handle_event(@close_confirm_reveal_votes, _params, socket) do
+    {:noreply, assign(socket, :modal_confirm_reveal_votes, false)}
+  end
+
+  @impl true
   def handle_event("open-room-config",__params, socket) do
     IO.inspect(socket, label: "Opening room config modal")
     IO.inspect(socket.assigns.form_room_config, label: "Form data")
@@ -185,6 +197,14 @@ defmodule ElixirPlanningPokerWeb.RoomLive do
     end
     {:noreply, assign(socket, :modal_ask_name, false)}
   end
+
+  def handle_event("open-profile-modal", _params, socket) do
+    {:noreply, assign(socket, :modal_ask_name, true)}
+  end
+
+
+
+  # --- main event handlers ---
 
   def handle_event("alter-status", %{"status" => status}, socket) do
     RoomManager.alter_room_status(socket.assigns.room_code, socket.assigns.user_token, String.to_atom(status))
@@ -259,12 +279,24 @@ defmodule ElixirPlanningPokerWeb.RoomLive do
   def handle_event("reveal-votes", %{"force" => force_str}, socket) do
     force? = force_str == "true"
 
-    result = RoomManager.reveal_votes(socket.assigns.room_code, force?)
 
-    IO.inspect(force?, label: "Force reveal votes parsed")
-    IO.inspect(result, label: "Reveal votes result")
+    case RoomManager.reveal_votes(socket.assigns.room_code, force?) do
+      :ok ->
+          socket =
+          socket
+          |> assign(:modal_confirm_reveal_votes, false)
+          {:noreply, socket}
 
-    {:noreply, socket}
+      {:need_confirmation, pending_users} ->
+        IO.inspect(pending_users, label: "Pending users for confirmation")
+        socket =
+          socket
+          |> assign(:modal_confirm_reveal_votes, true)
+          |> assign(:pending_reveal_user, pending_users)
+
+        {:noreply, socket}
+
+    end
   end
 
   def handle_event("confirm-reveal-votes", params , socket) do
@@ -274,8 +306,20 @@ defmodule ElixirPlanningPokerWeb.RoomLive do
     {:noreply, socket}
   end
 
+  def handle_event("copy-room-code", _params, socket) do
+    %URI{scheme: scheme, host: host, port: port} = socket.host_uri
+    base_url =
+      case port do
+        80 -> "#{scheme}://#{host}"
+        443 -> "#{scheme}://#{host}"
+        _ -> "#{scheme}://#{host}:#{port}"
+      end
+    room_url = base_url <> "/room/#{socket.assigns.room_code}"
+    socket = push_event(socket, "copy_to_clipboard", %{"text" => room_url})
+    {:noreply, socket}
+  end
 
-  def handle_event(_, _, socket), do: {:noreply, socket}
+
 
   # --- info handlers ---
   @impl true
@@ -330,7 +374,7 @@ defmodule ElixirPlanningPokerWeb.RoomLive do
   end
 
   @impl true
-  def handle_info({:room_revealed, results}, socket) do
+  def handle_info({:room_revealed, {:ok, results}}, socket) do
     socket
     |> assign(:room, %{socket.assigns.room | state: :revealed})
     |> assign(:results, results)
@@ -368,5 +412,15 @@ defmodule ElixirPlanningPokerWeb.RoomLive do
 
     {:noreply, socket}
   end
+
+
+  # --- private helpers ---
+
+
+@impl true
+def handle_event(_event, _params, socket) do
+  IO.inspect("warning",label: "Unhandled event")
+  {:noreply, socket}
+end
 
 end

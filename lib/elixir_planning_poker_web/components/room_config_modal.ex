@@ -14,15 +14,15 @@ defmodule ElixirPlanningPokerWeb.Components.RoomConfigModal do
     changeset =
       socket.assigns[:changeset] ||
         RoomConfig.changeset(%RoomConfig{}, data)
-      |> to_form(as: :room_config)
+        |> to_form(as: :room_config)
 
     {:ok,
-    socket
-    |> assign(assigns)
-    |> assign(:changeset, changeset)
-    |> assign(:form, to_form(changeset))
-    |> assign(:submit_event, submit_event)
-    |> assign(:close_event, close_event)}
+     socket
+     |> assign(assigns)
+     |> assign(:changeset, changeset)
+     |> assign(:form, to_form(changeset))
+     |> assign(:submit_event, submit_event)
+     |> assign(:close_event, close_event)}
   end
 
   def handle_event("validate", %{"room_config" => params}, socket) do
@@ -33,9 +33,9 @@ defmodule ElixirPlanningPokerWeb.Components.RoomConfigModal do
 
     form = to_form(changeset, as: :room_config)
     {:noreply,
-    socket
-    |> assign(:changeset, changeset)
-    |> assign(:form, form)}
+     socket
+     |> assign(:changeset, changeset)
+     |> assign(:form, form)}
   end
 
   def handle_event("internal_submit_room_config", params, socket) do
@@ -55,50 +55,64 @@ defmodule ElixirPlanningPokerWeb.Components.RoomConfigModal do
     <div>
     <.modal
       show={@show}
-      footer={:form}
-      form_id="room_form"
       title="Room Configuration"
-      close_event={assigns.close_event}
+      close_event={@close_event}
     >
 
-      <.form
-        for={@form}
-        as={:room_config}
-        id="room_form"
-        phx-change="validate"
-        phx-submit={"internal_submit_room_config"}
-        phx-target={@myself}
-        class="space-y-4"
-      >
-        <.input
-          field={@form[:name]}
-          type="text"
-          label="Room Name"
-          placeholder="Enter room name"
-        />
-
-        <.input
-          field={@form[:deck_type]}
-          type="select"
-          label="Deck Type"
-          options={[
-            {"Fibonacci", "fibonacci"},
-            {"T-Shirt", "tshirt"},
-            {"Sequential", "sequential"},
-            {"Custom", "custom"}
-          ]}
-        />
-
-        <%= if @form[:deck_type].value == "custom" do %>
+      <:body>
+        <.form
+          for={@form}
+          as={:room_config}
+          id="room_form"
+          phx-change="validate"
+          phx-submit="internal_submit_room_config"
+          phx-target={@myself}
+          class="space-y-4"
+        >
           <.input
-            field={@form[:custom_deck]}
+            field={@form[:name]}
             type="text"
-            placeholder="1,2,3,5,8,13"
-            label="Custom Deck (comma separated)"
+            label="Room Name"
+            placeholder="Enter room name"
           />
-        <% end %>
 
-      </.form>
+          <.input
+            field={@form[:deck_type]}
+            type="select"
+            label="Deck Type"
+            options={[
+              {"Fibonacci", "fibonacci"},
+              {"T-Shirt", "tshirt"},
+              {"Sequential", "sequential"},
+              {"Custom", "custom"}
+            ]}
+          />
+
+          <%= if @form[:deck_type].value == "custom" do %>
+            <.input
+              field={@form[:custom_deck]}
+              type="text"
+              placeholder="1,2,3,5,8,13"
+              label="Custom Deck (comma separated)"
+            />
+          <% end %>
+        </.form>
+      </:body>
+
+      <:footer>
+        <button type="submit" form="room_form" class="btn btn-primary">
+          Save
+        </button>
+
+        <button
+          type="button"
+          phx-click={@close_event}
+          class="btn btn-ghost"
+        >
+          Cancel
+        </button>
+      </:footer>
+
     </.modal>
     </div>
     """
