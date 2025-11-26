@@ -66,10 +66,6 @@ defmodule ElixirPlanningPoker.Room do
     GenServer.cast(via(room_code), {:select_story, story_id})
   end
 
-  def confirm_reveal_votes(room_code, decisive_vote) do
-    GenServer.cast(via(room_code), {:confirm_reveal_votes, decisive_vote})
-  end
-
   def vote_again(room_code) do
     GenServer.cast(via(room_code), :vote_again)
   end
@@ -77,6 +73,14 @@ defmodule ElixirPlanningPoker.Room do
   def highlight_vote(room_code, vote) do
     IO.inspect(vote, label: "Highlight vote called")
     GenServer.cast(via(room_code), {:highlight_vote, vote})
+  end
+
+  def confirm_vote_and_go_next_story(room_code) do
+    GenServer.cast(via(room_code), :confirm_vote_and_go_next_story)
+  end
+
+  def confirm_vote_and_continue_without_story(room_code) do
+    GenServer.cast(via(room_code), :confirm_vote_and_continue_without_story)
   end
 
   # Server Callbacks
@@ -216,38 +220,6 @@ defmodule ElixirPlanningPoker.Room do
   end
 
   @impl true
-  def handle_cast({:confirm_reveal_votes, decisive_vote}, state) do
-    stories_ok? =
-      is_list(state.stories) and
-        state.stories != [] and
-        not is_nil(state.current_story)
-    new_stories =
-      if stories_ok? do
-        Enum.map(state.stories, fn story ->
-          if story.id == state.current_story do
-            Map.put(story, :decisive_vote, decisive_vote)
-          else
-            story
-          end
-        end)
-      else
-        state.stories
-      end
-
-    next_story = find_next_story(state)
-
-    new_state =
-      state
-      |> Map.put(:state, :voting)
-      |> Map.put(:stories, new_stories)
-      |> Map.put(:current_story, next_story && next_story.id)
-      |> clear_votes()
-
-    notify_room_confirm_vote(new_state)
-    {:noreply, new_state}
-  end
-
-  @impl true
   def handle_cast({:change_observer_status, user_token, new_observer_status}, state) do
     updated_users =
       Enum.map(state.users, fn user ->
@@ -276,6 +248,67 @@ defmodule ElixirPlanningPoker.Room do
     IO.inspect(new_highlight, label: "New highlight")
     new_state = %{state | highlighted_vote: new_highlight}
     notify_room_highlight_vote(new_state, new_highlight)
+    {:noreply, new_state}
+  end
+
+  @impl true
+  def handle_cast(:confirm_vote_and_go_next_story, state) do
+
+    vote =
+      case state.highlighted_vote do
+        nil -> Enum.max_by(state.results.vote_frequencies, fn {_v, c} -> c end) |> elem(0)
+        hv -> hv
+      end
+
+    new_current_story_id = state.results.next_story.id
+    new_stories =
+      Enum.map(state.stories, fn story ->
+        if story.id == state.current_story do
+          %{story | story_points: vote}
+        else
+          story
+        end
+      end)
+
+    new_state =
+      %{state |
+        stories: new_stories,
+        current_story: new_current_story_id,
+        state: :voting
+      }
+      |> clear_votes()
+
+
+    notify_room_new_voting_round(new_state)
+    {:noreply, new_state}
+  end
+
+  @impl true
+  def handle_cast(:confirm_vote_and_continue_without_story, state) do
+
+    vote =
+      case state.highlighted_vote do
+        nil -> Enum.max_by(state.results.vote_frequencies, fn {_v, c} -> c end) |> elem(0)
+        hv -> hv
+      end
+
+    new_stories =
+      Enum.map(state.stories, fn story ->
+        if story.id == state.current_story do
+          %{story | story_points: vote}
+        else
+          story
+        end
+      end)
+
+    new_state =
+      %{state |
+        stories: new_stories,
+        current_story: nil,
+        state: :voting
+      }
+      |> clear_votes()
+    notify_room_new_voting_round(new_state)
     {:noreply, new_state}
   end
 
@@ -332,15 +365,13 @@ defmodule ElixirPlanningPoker.Room do
     %{state | users: updated_users, highlighted_vote: nil}
   end
 
-  defp find_next_story(state) do
-    state.stories
-    |> Enum.sort_by(& &1.id)
-    |> then(fn ordered ->
-      Enum.find(ordered, &(&1.id > state.current_story && &1.id != state.current_story)) ||
-        Enum.find(ordered, &is_nil(&1.story_points) && &1.id != state.current_story) ||
-        nil
-    end)
+  defp find_next_story(%{stories: stories, current_story: current_id}) do
+    ordered = Enum.sort_by(stories, & &1.id)
+    Enum.find(ordered, fn story -> story.id > current_id and is_nil(story.story_points) end) ||
+    Enum.find(ordered, fn story -> is_nil(story.story_points) and story.id != current_id end)
+
   end
+
 
 
 
@@ -461,6 +492,14 @@ defmodule ElixirPlanningPoker.Room do
       ElixirPlanningPoker.PubSub,
       "room:#{state.room_code}",
       {:room_highlight_vote, vote}
+    )
+  end
+
+  defp notify_room_new_voting_round(state) do
+    Phoenix.PubSub.broadcast(
+      ElixirPlanningPoker.PubSub,
+      "room:#{state.room_code}",
+      {:room_new_voting_round, state}
     )
   end
 

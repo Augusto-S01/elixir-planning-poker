@@ -99,6 +99,14 @@
         <!-- When revealed, show results -->
         <%= if @room.state == :revealed and @room.results do %>
           <div class="max-w-xl w-full bg-base-100 border border-base-300 rounded-xl shadow-lg p-6 flex flex-col gap-4">
+
+            <%= if all_stories_have_points?(@room) do %>
+            <h2 class="text-lg font-semibold mb-2 flex items-center gap-2">
+              <span class="text-2xl">🎉</span>
+              Voting Completed!
+            </h2>
+            <% end %>
+
             <h2 class="text-lg font-semibold mb-2 flex items-center gap-2">
               <span class="text-2xl">📊</span>
               Voting Results
@@ -157,27 +165,35 @@
 
             <div class="mt-4 flex flex-wrap gap-2 justify-between">
               <!-- These events do not exist yet; for now they are just visual -->
-              <button
-                type="button"
-                phx-click="go-next-story"
-                class="btn btn-sm btn-primary"
-              >
-                <%= if @room.results.next_story do %>
+              <%= if User.is_host?(@room.users, @user_token) do %>
+                                <%= if @room.results.next_story do %>
+                <.button
+                  type="button"
+                  phx-click="confirm_vote_and_go_next_story"
+                  class="btn btn-sm btn-primary"
+                >
                   Go to Next Story: {@room.results.next_story.title}
+                </.button>
                 <% else %>
-                  Vote again
+                <.button
+                  type="button"
+                  phx-click="confirm_vote_and_continue_without_story"
+                  class="btn btn-sm btn-primary"
+                >
+                    Vote without selecting a story
+                </.button>
                 <% end %>
-              </button>
 
-              <button
-                type="button"
-                phx-click="reopen-voting"
-                class="btn btn-sm btn-outline"
-              >
-                reopen voting
-              </button>
+                <button
+                  type="button"
+                  phx-click="reopen-voting"
+                  class="btn btn-sm btn-outline"
+                >
+                  reopen voting
+                </button>
+              <% end %>
+              </div>
             </div>
-          </div>
         <% else %>
           <!-- ROUND TABLE -->
           <div class="relative w-full max-w-4xl aspect-[4/3] bg-base-100 border border-base-300 rounded-2xl shadow-lg overflow-hidden">

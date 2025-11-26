@@ -296,13 +296,6 @@ defmodule ElixirPlanningPokerWeb.RoomLive do
     end
   end
 
-  def handle_event("confirm-reveal-votes", params , socket) do
-    decisive_vote = Map.get(params, "vote", nil)
-    IO.inspect(decisive_vote, label: "Decisive vote selected")
-    RoomManager.confirm_reveal_votes(socket.assigns.room_code, decisive_vote)
-    {:noreply, socket}
-  end
-
   def handle_event("copy-room-code", _params, socket) do
     %URI{scheme: scheme, host: host, port: port} = socket.host_uri
     base_url =
@@ -329,6 +322,16 @@ defmodule ElixirPlanningPokerWeb.RoomLive do
       false ->
         {:noreply, socket}
     end
+  end
+
+  def handle_event("confirm_vote_and_go_next_story", _params, socket) do
+    RoomManager.confirm_vote_and_go_next_story(socket.assigns.room_code)
+    {:noreply, socket}
+  end
+
+  def handle_event("confirm_vote_and_continue_without_story", _params, socket) do
+    RoomManager.confirm_vote_and_continue_without_story(socket.assigns.room_code)
+    {:noreply, socket}
   end
 
   # --- info handlers ---
@@ -428,6 +431,15 @@ defmodule ElixirPlanningPokerWeb.RoomLive do
     {:noreply, assign(socket, :room, room)}
   end
 
+  @impl true
+  def handle_info({:room_new_voting_round, new_state}, socket) do
+    socket =
+      socket
+      |> assign(:room, new_state)
+      |> put_flash(:info, "A new voting round has started.")
+    {:noreply, socket}
+  end
+
 
   # --- private helpers ---
   defp current_story(room) do
@@ -456,6 +468,10 @@ defmodule ElixirPlanningPokerWeb.RoomLive do
   defp format_agreement(value) when is_float(value) do
     percent = value * 100.0
     "#{Float.round(percent, 1)}% agreement"
+  end
+
+  defp all_stories_have_points?(room) do
+    Enum.all?(room.stories, fn story -> not is_nil(story.story_points) or story.id == room.current_story end)
   end
 
   @impl true

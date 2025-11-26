@@ -108,15 +108,6 @@ defmodule ElixirPlanningPoker.RoomManager do
     end
   end
 
-  def confirm_reveal_votes(room_code, decisive_vote) do
-    case Registry.lookup(ElixirPlanningPoker.RoomRegistry, room_code) do
-      [{_pid, _}] ->
-        ElixirPlanningPoker.Room.confirm_reveal_votes(room_code, decisive_vote)
-
-      [] -> {:error, :room_not_found}
-    end
-  end
-
   def vote_again(room_code) do
     case Registry.lookup(ElixirPlanningPoker.RoomRegistry, room_code) do
       [{_pid, _}] ->
@@ -130,6 +121,24 @@ defmodule ElixirPlanningPoker.RoomManager do
     case Registry.lookup(ElixirPlanningPoker.RoomRegistry, room_code) do
       [{_pid, _}] ->
         ElixirPlanningPoker.Room.highlight_vote(room_code, vote)
+
+      [] -> {:error, :room_not_found}
+    end
+  end
+
+  def confirm_vote_and_go_next_story(room_code) do
+    case Registry.lookup(ElixirPlanningPoker.RoomRegistry, room_code) do
+      [{_pid, _}] ->
+        ElixirPlanningPoker.Room.confirm_vote_and_go_next_story(room_code)
+
+      [] -> {:error, :room_not_found}
+    end
+  end
+
+  def confirm_vote_and_continue_without_story(room_code) do
+    case Registry.lookup(ElixirPlanningPoker.RoomRegistry, room_code) do
+      [{_pid, _}] ->
+        ElixirPlanningPoker.Room.confirm_vote_and_continue_without_story(room_code)
 
       [] -> {:error, :room_not_found}
     end
