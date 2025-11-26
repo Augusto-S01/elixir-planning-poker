@@ -70,7 +70,7 @@
             </.button>
           <% end %>
 
-
+        
         </div>
       <% end %>
       
@@ -163,37 +163,36 @@
               </div>
             </div>
 
-            <div class="mt-4 flex flex-wrap gap-2 justify-between">
-              <!-- These events do not exist yet; for now they are just visual -->
-              <%= if User.is_host?(@room.users, @user_token) do %>
-                                <%= if @room.results.next_story do %>
+          <div class="mt-4 flex flex-wrap gap-2 justify-between">
+            <%= if User.is_host?(@room.users, @user_token) do %>
+              <%= if story = get_next_story(@room) do %>
                 <.button
                   type="button"
-                  phx-click="confirm_vote_and_go_next_story"
+                  phx-click="confirm-vote-and-go-next-story"
                   class="btn btn-sm btn-primary"
                 >
-                  Go to Next Story: {@room.results.next_story.title}
+                  Go to Next Story: {story.title}
                 </.button>
-                <% else %>
+              <% else %>
                 <.button
                   type="button"
                   phx-click="confirm_vote_and_continue_without_story"
                   class="btn btn-sm btn-primary"
                 >
-                    Vote without selecting a story
+                  Vote without selecting a story
                 </.button>
-                <% end %>
-
-                <button
-                  type="button"
-                  phx-click="reopen-voting"
-                  class="btn btn-sm btn-outline"
-                >
-                  reopen voting
-                </button>
               <% end %>
-              </div>
-            </div>
+
+              <button
+                type="button"
+                phx-click="reopen-voting"
+                class="btn btn-sm btn-outline"
+              >
+                reopen voting
+              </button>
+            <% end %>
+          </div>
+        </div> 
         <% else %>
           <!-- ROUND TABLE -->
           <div class="relative w-full max-w-4xl aspect-[4/3] bg-base-100 border border-base-300 rounded-2xl shadow-lg overflow-hidden">

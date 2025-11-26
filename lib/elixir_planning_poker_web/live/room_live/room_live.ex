@@ -324,7 +324,7 @@ defmodule ElixirPlanningPokerWeb.RoomLive do
     end
   end
 
-  def handle_event("confirm_vote_and_go_next_story", _params, socket) do
+  def handle_event("confirm-vote-and-go-next-story", _params, socket) do
     RoomManager.confirm_vote_and_go_next_story(socket.assigns.room_code)
     {:noreply, socket}
   end
@@ -440,7 +440,6 @@ defmodule ElixirPlanningPokerWeb.RoomLive do
     {:noreply, socket}
   end
 
-
   # --- private helpers ---
   defp current_story(room) do
     case room.current_story do
@@ -472,6 +471,13 @@ defmodule ElixirPlanningPokerWeb.RoomLive do
 
   defp all_stories_have_points?(room) do
     Enum.all?(room.stories, fn story -> not is_nil(story.story_points) or story.id == room.current_story end)
+  end
+
+  defp get_next_story(room) do
+    ordered = Enum.sort_by(room.stories, & &1.id)
+    current_id = room.current_story
+    Enum.find(ordered, fn story -> story.id > current_id and is_nil(story.story_points) end) ||
+    Enum.find(ordered, fn story -> is_nil(story.story_points) and story.id != current_id end)
   end
 
   @impl true

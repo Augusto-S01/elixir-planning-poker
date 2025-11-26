@@ -372,9 +372,6 @@ defmodule ElixirPlanningPoker.Room do
 
   end
 
-
-
-
   defp calculate_results(room) do
     vote_frequencies =
       room.users
@@ -476,14 +473,6 @@ defmodule ElixirPlanningPoker.Room do
       ElixirPlanningPoker.PubSub,
       "room:#{state.room_code}",
       {:room_story_selected, state.current_story}
-    )
-  end
-
-  defp notify_room_confirm_vote(new_state) do
-    Phoenix.PubSub.broadcast(
-      ElixirPlanningPoker.PubSub,
-      "room:#{new_state.room_code}",
-      {:room_confirmed_reveal_votes, new_state}
     )
   end
 
