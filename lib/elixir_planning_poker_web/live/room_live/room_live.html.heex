@@ -1,3 +1,6 @@
+<div class="h-screen overflow-hidden">
+  <div class="h-full flex flex-col">
+
 <header class="border-b border-base-300 bg-base-100 px-6 py-3 flex items-center justify-between gap-4" phx-hook="CopyToClipboard" id="room-header">
     <div class="flex items-center gap-10">
       <div class="flex flex-col">
@@ -62,7 +65,6 @@
               phx-click="reveal-votes"
               phx-value-force={"false"}
               class="btn btn-primary "
-              label="Start Voting"
             >
              Show Results
             </.button>
@@ -86,79 +88,100 @@
     </div>
 </header>
 
-<main class="flex min-h-screen flex-col items-center justify-center p-24">
-  <span>
-    ️Users:
-    <%= for user <- @room.users do %>
-      <p>name: {user.name}</p>
-      <p>role: {user.role}</p>
-      <p>user: {user.user}</p>
-      <p>voted?: {user.voted?}</p>
-      <p>observer?: {user.observer?}</p>
-    <% end %>
-  </span>
-  <p>ask : {@modal_ask_name}</p>
-  <div>
-    State: {@room.state}
-    <.button phx-click="alter-status" phx-value-status="waiting" type="button" class="btn" value="Set Waiting">Set Waiting</.button>
-    <.button phx-click="alter-status" phx-value-status="voting" type="button" class="btn" value="Start Voting">Start Voting</.button>
-  </div>
-  <div>
-    Observer Status:
-    <.button phx-click="observer-switch" class="btn">Switch observer status</.button>
-  </div>
-  <div>
-    Cards:
-    <%= for card <- @room.cards do %>
-      <p phx-click="select-card" class="cursor-pointer btn" phx-value-card={card}>Card: {card}</p>
-    <% end %>
-  </div>
+<!-- MAIN + ASIDE -->
+<div class="flex flex-1 h-full overflow-hidden">
+  <!-- MAIN AREA -->
+  <main class="flex-1 flex flex-col p-6 overflow-auto min-h-0">
+    <span>
+      Users:
+      <%= for user <- @room.users do %>
+        <p>name: {user.name}</p>
+        <p>role: {user.role}</p>
+        <p>user: {user.user}</p>
+        <p>voted?: {user.voted?}</p>
+        <p>observer?: {user.observer?}</p>
+      <% end %>
+    </span>
+  </main>
 
-  <div>
-    <span phx-click="teste"> Stories: </span> 
-  <%= if @room.stories == [] do %>
-    <p>No stories yet</p>
-  <% else %>
-    <%= for story <- @room.stories do %>
-      <p>Title: {story.title} - Description: {story.description}</p>
-      <.button phx-click="select-story" phx-value-story-id={story.id} class="btn">Select Story</.button>
-      <.button phx-click="remove-story" phx-value-story-id={story.id} class="btn btn-secondary">Remove Story</.button>
-    <% end %>
-  <% end %>
-  </div>
-
-  <div>
-    Stories actions:
-    <.form
-      for={@new_story_form}
-      phx-submit="add-story"
-      phx-change="validate-story-form"
-      class="flex flex-col gap-2 mb-4"
-    >
+  <!-- SIDEBAR / STORIES -->
+  <aside class="w-80 border-l border-base-300 bg-base-100 flex flex-col h-full overflow-hidden">
+    <!-- Header stories (fixed) -->
+    <div class="px-4 py-3 border-b border-base-200 flex items-center justify-between shrink-0">
       <div>
-        <.input field={@new_story_form[:title]} label="Title" class="w-full" />
+        <p class="text-xs uppercase tracking-wide text-base-content/60">Stories</p>
+        <p class="text-sm font-semibold">Backlog for voting</p>
       </div>
+      <span class="badge badge-sm">{length(@room.stories)}</span>
+    </div>
 
-      <div>
-        <.input field={@new_story_form[:description]} type="textarea" label="Description" class="w-full" />
-      </div>
+    <!-- stories scroll area  -->
+    <div class="flex-1 min-h-0 overflow-y-auto px-4 py-3 space-y-2">
+      <%= if @room.stories == [] do %>
+        <p class="text-sm text-base-content/70 italic">No stories yet.</p>
+      <% else %>
+        <%= for story <- @room.stories do %>
+          <div class={[
+            "border rounded-lg px-3 py-2 text-sm flex flex-col gap-1",
+            @room.current_story == story.id && "border-primary bg-primary/5",
+            @room.current_story != story.id && "border-base-300"
+          ]}>
+            <div>
+              <p class="font-medium truncate" title={story.title}>{story.title}</p>
+              <p class="text-[11px] text-base-content/70 line-clamp-2">
+                {story.description}
+              </p>
+            </div>
 
-      <.button type="submit" class="btn btn-primary mt-2">
-        Add Story
-      </.button>
-    </.form>
+            <div class="mt-1 flex items-center justify-between">
+              <div class="flex gap-1">
+                <button phx-click="select-story" phx-value-story-id={story.id}
+                        class="btn btn-xs btn-outline">
+                  Select
+                </button>
+                <button phx-click="remove-story" phx-value-story-id={story.id}
+                        class="btn btn-xs btn-ghost text-error">
+                  Remove
+                </button>
+              </div>
 
-    <hr/>
-  </div>
+              <%= if story[:decisive_vote] do %>
+                <span class="badge badge-ghost badge-xs">
+                  Final: {story.decisive_vote}
+                </span>
+              <% end %>
+            </div>
+          </div>
+        <% end %>
+      <% end %>
+    </div>
 
+    <!-- New story form  -->
+    <div class="px-4 py-3 border-t border-base-200 bg-base-200 shrink-0">
+      <p class="text-xs uppercase tracking-wide text-base-content/60 mb-2">
+        New story
+      </p>
 
-  <%= if User.is_host?(@room.users, @user_token) do %>
-    <.button phx-click="open-room-config" class="btn btn-secondary mt-4">Open Room Config</.button>
-    <.button phx-click="reveal-votes" phx-value-force={"false"}class="btn btn-primary mt-4">Calculate Results</.button>
-    <.button phx-click="reveal-votes" phx-value-force={"true"} class="btn btn-warning mt-4">Force Reveal Votes</.button>
-    <.button phx-click="confirm-reveal-votes" class="btn btn-success mt-4">Confirm Reveal Votes</.button>
-  <% end %>
-</main>
+      <.form
+        for={@new_story_form}
+        phx-change="validate-story-form"
+        phx-submit="add-story"
+        class="flex flex-col gap-2"
+      >
+        <.input field={@new_story_form[:title]} label="Title" />
+
+        <.input
+          type="textarea"
+          field={@new_story_form[:description]}
+          label="Description"
+          class="min-h-[80px] w-full"
+        />
+
+        <button class="btn btn-primary btn-sm self-end">Add</button>
+      </.form>
+    </div>
+  </aside>
+</div>
 
 <.modal
   show={@modal_ask_name}
@@ -245,4 +268,5 @@
 />
 
 <ElixirPlanningPokerWeb.Layouts.flash_group flash={@flash} />
-<Layouts.theme_toggle />
+</div>
+</div>
