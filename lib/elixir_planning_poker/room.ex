@@ -12,7 +12,9 @@ defmodule ElixirPlanningPoker.Room do
     :current_story,
     :state,
     :cards,
-    :room_code
+    :room_code,
+    :highlighted_vote,
+    :results
   ]
 
   # Client API
@@ -68,6 +70,15 @@ defmodule ElixirPlanningPoker.Room do
     GenServer.cast(via(room_code), {:confirm_reveal_votes, decisive_vote})
   end
 
+  def vote_again(room_code) do
+    GenServer.cast(via(room_code), :vote_again)
+  end
+
+  def highlight_vote(room_code, vote) do
+    IO.inspect(vote, label: "Highlight vote called")
+    GenServer.cast(via(room_code), {:highlight_vote, vote})
+  end
+
   # Server Callbacks
   @impl true
   def init(opts) do
@@ -81,7 +92,9 @@ defmodule ElixirPlanningPoker.Room do
       state: :waiting,
       cards: get_cards_from_deck(opts[:deck_type], opts[:custom_deck]),
       story_counter: 0,
-      room_code: opts[:room_code]
+      highlighted_vote: nil,
+      room_code: opts[:room_code],
+      results: nil
     }
 
     {:ok, room}
@@ -119,7 +132,9 @@ defmodule ElixirPlanningPoker.Room do
     new_story = %{
       id: state.story_counter + 1,
       title: Map.get(story_params, :title, ""),
-      description: Map.get(story_params, :description, "")
+      description: Map.get(story_params, :description, ""),
+      story_points: Map.get(story_params, :story_points, nil),
+      votes: Map.get(story_params, :votes, []),
     }
 
     new_state = %{state | stories: state.stories ++ [new_story], story_counter: state.story_counter + 1}
@@ -190,36 +205,14 @@ defmodule ElixirPlanningPoker.Room do
   end
 
   @impl true
-  def handle_cast({:change_observer_status, user_token, new_observer_status}, state) do
-    updated_users =
-      Enum.map(state.users, fn user ->
-        if user.user == user_token do
-          %{user | observer?: new_observer_status}
-        else
-          user
-        end
-      end)
-    new_state = %{state | users: updated_users}
-    notify_users_updated(new_state)
+  def handle_cast(:vote_again, state) do
+    new_state =
+      state
+      |> Map.put(:state, :voting)
+      |> clear_votes()
+
+    notify_room_status_changed(new_state)
     {:noreply, new_state}
-  end
-
-  @impl true
-  def handle_call({:reveal_votes, force?}, _from, state) do
-    cond do
-      force?  or all_voted?(state) ->
-        new_state = %{state | state: :revealed}
-        notify_room_revealed(new_state, calculate_results(new_state))
-
-        {:reply, :ok, new_state}
-      true ->
-        pending =
-          pending_users(state)
-          |> Enum.map(fn user -> user.name end)
-
-
-        {:reply, {:need_confirmation, pending}, state}
-    end
   end
 
   @impl true
@@ -254,6 +247,54 @@ defmodule ElixirPlanningPoker.Room do
     {:noreply, new_state}
   end
 
+  @impl true
+  def handle_cast({:change_observer_status, user_token, new_observer_status}, state) do
+    updated_users =
+      Enum.map(state.users, fn user ->
+        if user.user == user_token do
+          %{user | observer?: new_observer_status}
+        else
+          user
+        end
+      end)
+    new_state = %{state | users: updated_users}
+    notify_users_updated(new_state)
+    {:noreply, new_state}
+  end
+
+  @impl true
+  def handle_cast({:highlight_vote, vote}, state) do
+    IO.inspect(vote, label: "Highlight vote called")
+    new_highlight = case state.highlighted_vote do
+      ^vote ->
+        IO.inspect("Clearing highlight", label: "Highlight vote")
+        nil
+      _ ->
+        IO.inspect("Setting highlight", label: "Highlight vote")
+        vote
+      end
+    IO.inspect(new_highlight, label: "New highlight")
+    new_state = %{state | highlighted_vote: new_highlight}
+    notify_room_highlight_vote(new_state, new_highlight)
+    {:noreply, new_state}
+  end
+
+  @impl true
+  def handle_call({:reveal_votes, force?}, _from, state) do
+    cond do
+      force?  or all_voted?(state) ->
+        new_state = %{state | state: :revealed, results: calculate_results(state)}
+        notify_room_revealed(new_state, new_state.results)
+        {:reply, :ok, new_state}
+      true ->
+        pending =
+          pending_users(state)
+          |> Enum.map(fn user -> user.name end)
+
+
+        {:reply, {:need_confirmation, pending}, state}
+    end
+  end
 
   @impl true
   def handle_call(:get_state, _from, state), do: {:reply, state, state}
@@ -288,15 +329,16 @@ defmodule ElixirPlanningPoker.Room do
         %{user | vote: nil, voted?: false}
       end)
 
-    %{state | users: updated_users}
+    %{state | users: updated_users, highlighted_vote: nil}
   end
 
   defp find_next_story(state) do
     state.stories
     |> Enum.sort_by(& &1.id)
     |> then(fn ordered ->
-      Enum.find(ordered, &(&1.id > state.current_story)) ||
-        Enum.find(ordered, &is_nil(&1.vote))
+      Enum.find(ordered, &(&1.id > state.current_story && &1.id != state.current_story)) ||
+        Enum.find(ordered, &is_nil(&1.story_points) && &1.id != state.current_story) ||
+        nil
     end)
   end
 
@@ -307,20 +349,35 @@ defmodule ElixirPlanningPoker.Room do
       room.users
       |> Enum.map(& &1.vote)
       |> Enum.frequencies()
+
     player_count = length(room.users)
+
     agreement =
       vote_frequencies
       |> Enum.map(fn {_vote, count} -> count / player_count end)
       |> Enum.max()
-    current_story = Enum.filter(room.stories, fn story -> story.id == room.current_story end)
-    room.current_story || %{}
 
-    {:ok,
+    current_story = Enum.find(room.stories, fn story -> story.id == room.current_story end)
+    |> case do
+      nil -> nil
+      story ->
+        %{story | votes:
+          room.users
+          |> Enum.filter(& !is_nil(&1.vote))
+          |> Enum.map(fn user ->
+            %{user: user.user, name: user.name, vote: user.vote}
+          end)
+        }
+    end
+
+    next_story = find_next_story(room)
+
       %{
       agreement: agreement,
       vote_frequencies: vote_frequencies,
-      story: current_story
-      }}
+      story: current_story,
+      next_story: next_story
+      }
 
   end
 
@@ -396,6 +453,14 @@ defmodule ElixirPlanningPoker.Room do
       ElixirPlanningPoker.PubSub,
       "room:#{new_state.room_code}",
       {:room_confirmed_reveal_votes, new_state}
+    )
+  end
+
+  defp notify_room_highlight_vote(state, vote) do
+    Phoenix.PubSub.broadcast(
+      ElixirPlanningPoker.PubSub,
+      "room:#{state.room_code}",
+      {:room_highlight_vote, vote}
     )
   end
 

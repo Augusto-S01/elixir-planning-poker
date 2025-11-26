@@ -91,18 +91,229 @@
 <!-- MAIN + ASIDE -->
 <div class="flex flex-1 h-full overflow-hidden">
   <!-- MAIN AREA -->
-  <main class="flex-1 flex flex-col p-6 overflow-auto min-h-0">
-    <span>
-      Users:
-      <%= for user <- @room.users do %>
-        <p>name: {user.name}</p>
-        <p>role: {user.role}</p>
-        <p>user: {user.user}</p>
-        <p>voted?: {user.voted?}</p>
-        <p>observer?: {user.observer?}</p>
+<!-- MAIN CONTENT -->
+  <section class="flex flex-1 overflow-hidden">
+    <!-- TABLE / RESULTS -->
+    <div class="flex-1 flex flex-col p-6 gap-4">
+      <div class="flex-1 flex items-center justify-center">
+        <!-- When revealed, show results -->
+        <%= if @room.state == :revealed and @room.results do %>
+          <div class="max-w-xl w-full bg-base-100 border border-base-300 rounded-xl shadow-lg p-6 flex flex-col gap-4">
+            <h2 class="text-lg font-semibold mb-2 flex items-center gap-2">
+              <span class="text-2xl">📊</span>
+              Voting Results
+            </h2>
+
+            <div class="space-y-3">
+              <div>
+                <p class="text-xs uppercase tracking-wide text-base-content/60 mb-1">
+                  Current Story
+                </p>
+                <%= case @room.results.story do %>
+                  <% nil -> %>
+                    <p class="text-sm text-base-content/70 italic">
+                      No story selected.
+                    </p>
+                  <% _ ->  %>
+                      <p class="text-sm font-medium">
+                        {@room.results.story.title}
+                      </p>
+                      <p class="text-xs text-base-content/70">
+                        {@room.results.story.description}
+                      </p>
+                <% end %>
+              </div>
+
+              <div>
+                <p class="text-xs uppercase tracking-wide text-base-content/60 mb-1">
+                  Agreement Level
+                </p>
+                <p class="text-sm">
+                  {format_agreement(@room.results.agreement)}
+                </p>
+              </div>
+
+              <div>
+                <p class="text-xs uppercase tracking-wide text-base-content/60 mb-1">
+                  Vote Distribution
+                </p>
+                <div class="flex flex-wrap gap-2">
+                  <%= for {vote, count} <- @room.results.vote_frequencies do %>
+                    <div
+                      phx-click="highlight-vote"
+                      phx-value-vote={vote} 
+                      class={"badge badge-outline gap-1 px-3 py-2 flex items-center gap-2 :hover:bg-base-200 :hover transition-colors cursor-pointer " 
+                      <> if @room.highlighted_vote == vote, do: "badge-primary", else: ""}
+                    >
+                      <span class="font-mono">{vote || "—"}</span>
+                      <span class="text-xs text-base-content/70">x{count}</span>
+                    </div>
+                  <% end %>
+
+
+                </div>
+              </div>
+            </div>
+
+            <div class="mt-4 flex flex-wrap gap-2 justify-between">
+              <!-- These events do not exist yet; for now they are just visual -->
+              <button
+                type="button"
+                phx-click="go-next-story"
+                class="btn btn-sm btn-primary"
+              >
+                <%= if @room.results.next_story do %>
+                  Go to Next Story: {@room.results.next_story.title}
+                <% else %>
+                  Vote again
+                <% end %>
+              </button>
+
+              <button
+                type="button"
+                phx-click="reopen-voting"
+                class="btn btn-sm btn-outline"
+              >
+                reopen voting
+              </button>
+            </div>
+          </div>
+        <% else %>
+          <!-- ROUND TABLE -->
+          <div class="relative w-full max-w-4xl aspect-[4/3] bg-base-100 border border-base-300 rounded-2xl shadow-lg overflow-hidden">
+            <!-- Central "Table" -->
+          <div class="absolute inset-1/4 rounded-full bg-base-200 border border-base-300 flex items-center justify-center">
+            <div class="text-center px-6">
+              <p class="text-xs uppercase tracking-wide text-base-content/60 mb-1">
+                Current Story
+              </p>
+
+              <%= if story = current_story(@room) do %>
+                <p class="font-semibold text-sm mb-1">
+                  {story.title}
+                </p>
+                <p class="text-xs text-base-content/70 line-clamp-3">
+                  {story.description}
+                </p>
+              <% else %>
+                <p class="text-sm text-base-content/70 italic">
+                  No story selected.
+                </p>
+              <% end %>
+            </div>
+          </div>
+
+             <!-- Participants around the table -->
+            <div class="absolute inset-0">
+              <%= for {user, idx} <- Enum.with_index(@room.users) do %>
+                <div
+                  style={seat_position_style(idx, length(@room.users))}
+                  class="absolute -translate-x-1/2 -translate-y-1/2"
+                >
+                  <div class="group relative flex flex-col items-center gap-1">
+                    <!-- Name above avatar -->
+                    <span
+                      class="text-[11px] max-w-[90px] truncate text-base-content/80 text-center"
+                      title={user.name || "Unknown"}
+                    >
+                      {user.name || "Anonymous"}
+                    </span>
+
+                    <!-- Avatar -->
+                    <div
+                      class={[
+                        "w-12 h-12 rounded-full border-2 flex items-center justify-center text-sm font-semibold transition-all",
+                        user.voted? && "border-success shadow-md",
+                        !user.voted? && "border-base-300 bg-base-200",
+                        user.user == @user_token && "ring-2 ring-primary ring-offset-2 ring-offset-base-100"
+                      ]}
+                      title={user.name || "Unknown"}
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-base-content/50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                    </div>
+
+                    <!-- Hover actions: only for OTHER users -->
+                    <%= if user.user != @user_token do %>
+                      <div class="pointer-events-none absolute -bottom-10 left-1/2 -translate-x-1/2 opacity-0 translate-y-1 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-150">
+                        <div class="pointer-events-auto bg-base-100 border border-base-300 rounded-full shadow-lg px-2 py-1 flex items-center gap-1">
+                          <!-- Poke -->
+                          <button
+                            type="button"
+                            phx-click="poke"
+                            phx-value-user={user.user}
+                            class="btn btn-ghost btn-xs px-1"
+                            title="Poke"
+                          >
+                            😜
+                          </button>
+
+                          <!-- The options below only appear if the VIEWER is host -->
+                          <%= if User.is_host?(@room.users, @user_token) do %>
+                            <!-- Pass leadership -->
+                            <button
+                              type="button"
+                              phx-click="pass-leadership"
+                              phx-value-user={user.user}
+                              class="btn btn-ghost btn-xs px-1"
+                              title="Make host"
+                            >
+                              👑
+                            </button>
+
+                            <!-- Kick user -->
+                            <button
+                              type="button"
+                              phx-click="kick-user"
+                              phx-value-user={user.user}
+                              class="btn btn-ghost btn-xs px-1 text-error"
+                              title="Remove from room"
+                            >
+                              ✖
+                            </button>
+                          <% end %>
+                        </div>
+                      </div>
+                    <% end %>
+                  </div>
+                </div>
+              <% end %>
+            </div>
+
+          
+          </div>
+        <% end %>
+      </div>
+
+      <!-- Player's cards (bottom of the screen) -->
+      <%= if @room.state == :voting and @room.cards != [] do %>
+        <%= if current_user = Enum.find(@room.users, &(&1.user == @user_token)) do %>
+          <div class="mt-2 flex flex-col gap-2">
+            <p class="text-xs uppercase tracking-wide text-base-content/60">
+              Your cards
+            </p>
+            <div class="flex flex-wrap gap-2">
+              <%= for card <- @room.cards do %>
+                <button
+                  type="button"
+                  phx-click="select-card"
+                  phx-value-card={card}
+                  class={[
+                    "btn btn-sm rounded-md min-w-[3rem] font-mono",
+                    current_user.vote == card && "btn-primary",
+                    current_user.vote != card && "btn-ghost border border-base-300"
+                  ]}
+                >
+                  {card}
+                </button>
+              <% end %>
+            </div>
+          </div>
+        <% end %>
       <% end %>
-    </span>
-  </main>
+    </div>
+  </section>
 
   <!-- SIDEBAR / STORIES -->
   <aside class="w-80 border-l border-base-300 bg-base-100 flex flex-col h-full overflow-hidden">
@@ -128,9 +339,8 @@
           ]}>
             <div>
               <p class="font-medium truncate" title={story.title}>{story.title}</p>
-              <p class="text-[11px] text-base-content/70 line-clamp-2">
-                {story.description}
-              </p>
+              <p class="text-[11px] text-base-content/70 line-clamp-2">{story.description}</p>
+              <p class="text-xs text-base-content/70">Story Points: {story.story_points || "Not assigned"}</p>
             </div>
 
             <div class="mt-1 flex items-center justify-between">

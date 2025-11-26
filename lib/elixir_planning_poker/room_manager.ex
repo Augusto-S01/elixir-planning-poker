@@ -117,4 +117,22 @@ defmodule ElixirPlanningPoker.RoomManager do
     end
   end
 
+  def vote_again(room_code) do
+    case Registry.lookup(ElixirPlanningPoker.RoomRegistry, room_code) do
+      [{_pid, _}] ->
+        ElixirPlanningPoker.Room.vote_again(room_code)
+
+      [] -> {:error, :room_not_found}
+    end
+  end
+
+  def highlight_vote(room_code, vote) do
+    case Registry.lookup(ElixirPlanningPoker.RoomRegistry, room_code) do
+      [{_pid, _}] ->
+        ElixirPlanningPoker.Room.highlight_vote(room_code, vote)
+
+      [] -> {:error, :room_not_found}
+    end
+  end
+
 end

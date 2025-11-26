@@ -202,8 +202,6 @@ defmodule ElixirPlanningPokerWeb.RoomLive do
     {:noreply, assign(socket, :modal_ask_name, true)}
   end
 
-
-
   # --- main event handlers ---
 
   def handle_event("alter-status", %{"status" => status}, socket) do
@@ -275,7 +273,6 @@ defmodule ElixirPlanningPokerWeb.RoomLive do
     {:noreply, socket}
   end
 
-
   def handle_event("reveal-votes", %{"force" => force_str}, socket) do
     force? = force_str == "true"
 
@@ -319,7 +316,20 @@ defmodule ElixirPlanningPokerWeb.RoomLive do
     {:noreply, socket}
   end
 
+  def handle_event("reopen-voting", _params, socket) do
+    RoomManager.vote_again(socket.assigns.room_code)
+    {:noreply, socket}
+  end
 
+  def handle_event("highlight-vote", %{"vote" => vote}, socket) do
+    case User.is_host?(socket.assigns.room.users, socket.assigns.user_token) do
+      true ->
+        RoomManager.highlight_vote(socket.assigns.room_code, vote)
+        {:noreply, socket}
+      false ->
+        {:noreply, socket}
+    end
+  end
 
   # --- info handlers ---
   @impl true
@@ -374,10 +384,9 @@ defmodule ElixirPlanningPokerWeb.RoomLive do
   end
 
   @impl true
-  def handle_info({:room_revealed, {:ok, results}}, socket) do
+  def handle_info({:room_revealed,  results}, socket) do
     socket
-    |> assign(:room, %{socket.assigns.room | state: :revealed})
-    |> assign(:results, results)
+    |> assign(:room, %{socket.assigns.room | state: :revealed, results: results})
     |> put_flash(:info, "Votes have been revealed.")
     |> then(&{:noreply, &1})
   end
@@ -413,14 +422,46 @@ defmodule ElixirPlanningPokerWeb.RoomLive do
     {:noreply, socket}
   end
 
+  @impl true
+  def handle_info({:room_highlight_vote, vote}, socket) do
+    room = %{socket.assigns.room | highlighted_vote: vote}
+    {:noreply, assign(socket, :room, room)}
+  end
+
 
   # --- private helpers ---
+  defp current_story(room) do
+    case room.current_story do
+      nil -> nil
+      id -> Enum.find(room.stories, &(&1.id == id))
+    end
+  end
 
+  defp seat_position_style(_idx, total) when total <= 0 do
+    "top: 50%; left: 50%;"
+  end
 
-@impl true
-def handle_event(_event, _params, socket) do
-  IO.inspect("warning",label: "Unhandled event")
-  {:noreply, socket}
-end
+  defp seat_position_style(idx, total) do
+    angle = 2 * :math.pi() * idx / total
+    radius = 40.0
+
+    x = 50.0 + radius * :math.cos(angle)
+    y = 50.0 + radius * :math.sin(angle)
+
+    "top: #{Float.round(y, 2)}%; left: #{Float.round(x, 2)}%;"
+  end
+
+  defp format_agreement(nil), do: "—"
+
+  defp format_agreement(value) when is_float(value) do
+    percent = value * 100.0
+    "#{Float.round(percent, 1)}% agreement"
+  end
+
+  @impl true
+  def handle_event(_event, _params, socket) do
+    IO.inspect("warning",label: "Unhandled event")
+    {:noreply, socket}
+  end
 
 end
