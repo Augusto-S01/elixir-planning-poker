@@ -362,6 +362,11 @@ end
     {:noreply, socket}
   end
 
+  def handle_event("pass-leadership", %{"user" => new_leader_token}, socket) do
+    RoomManager.pass_leadership(socket.assigns.room_code, socket.assigns.user_token, new_leader_token)
+    {:noreply, socket}
+  end
+
   # --- info handlers ---
   @impl true
   def handle_info({@submit_room_config, new_state}, socket) do

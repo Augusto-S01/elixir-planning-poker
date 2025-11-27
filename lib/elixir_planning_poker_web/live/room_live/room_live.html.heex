@@ -75,7 +75,7 @@
       <% end %>
       
       <!-- Profile Button (opens name/icon modal) -->
-      <%= if current_user = Enum.find(@room.users, &(&1.user == @user_token)) do %>
+      <%= if Enum.find(@room.users, &(&1.user == @user_token)) do %>
         <.button
           phx-click="open-profile-modal"
           class="btn btn-ghost btn-circle"
@@ -90,7 +90,7 @@
 
 <!-- MAIN + ASIDE -->
 <div class="flex flex-1 h-full overflow-hidden">
-  <!-- MAIN AREA -->
+<!-- MAIN AREA -->
 <!-- MAIN CONTENT -->
   <section class="flex flex-1 overflow-hidden">
     <!-- TABLE / RESULTS -->
@@ -277,17 +277,6 @@
                               title="Make host"
                             >
                               👑
-                            </button>
-
-                            <!-- Kick user -->
-                            <button
-                              type="button"
-                              phx-click="kick-user"
-                              phx-value-user={user.user}
-                              class="btn btn-ghost btn-xs px-1 text-error"
-                              title="Remove from room"
-                            >
-                              ✖
                             </button>
                           <% end %>
                         </div>
