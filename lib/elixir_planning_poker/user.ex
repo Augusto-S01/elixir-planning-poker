@@ -1,20 +1,26 @@
 defmodule ElixirPlanningPoker.User do
   @enforce_keys [:user]
-  defstruct [:name, :user, :role, :vote, :voted? , :observer?]
+  defstruct [:name, :user, :role, :vote, :voted? , :observer?, :icon]
+  import Ecto.Changeset
+  @icon_profile_options ["axolotl","cat","dog","donkey","elephant","owl","penguin","platypus","reindeer","tiger"]
 
   @type t :: %__MODULE__{
           name: String.t(),
           user: String.t(),
+          icon: String.t(),
           role: :host | :participant | atom(),
           vote: integer() | nil,
           observer?: boolean(),
-          voted?: boolean()
+          voted?: boolean(),
         }
+
+  @spec icon_profile_options() :: [String.t()]
+  def icon_profile_options, do: @icon_profile_options
 
   @spec new(String.t(), String.t(), atom()) :: t()
   def new(user_token, name \\ "", role \\ :participant)
       when is_binary(user_token) and is_atom(role) do
-      %__MODULE__{user: user_token, name: name, role: role, vote: nil, voted?: false, observer?: false}
+      %__MODULE__{user: user_token, name: name, role: role, vote: nil, voted?: false, observer?: false, icon: random_icon()}
   end
 
   @spec find_user([map()], String.t()) :: {:ok, map()} | {:error, :not_found}
@@ -27,6 +33,18 @@ defmodule ElixirPlanningPoker.User do
     end
   end
 
+  defp random_icon do
+    Enum.random(@icon_profile_options)
+  end
+
+  def get_user_icon(users, user_token) do
+    case find_user(users, user_token) do
+      {:ok, %__MODULE__{icon: icon}} -> icon
+      {:ok, %{} = user} -> Map.get(user, :icon, "cat")
+      {:error, :not_found} -> "cat"
+    end
+  end
+
   def is_host?(users, user_token) do
     case find_user(users, user_token) do
       {:ok, %__MODULE__{role: :host}} -> true
@@ -36,15 +54,15 @@ defmodule ElixirPlanningPoker.User do
   end
 
   def changeset(%__MODULE__{} = user, attrs \\ %{}) do
-    {user, %{name: :string}}
-    |> Ecto.Changeset.cast(attrs, [:name])
-    |> Ecto.Changeset.validate_required([:name])
+    {user, %{name: :string, icon: :string}}
+    |> cast(attrs, [:name, :icon])
+    |> validate_required([:name])
+    |> validate_length(:name, min: 2)
   end
 
   def fetch(%__MODULE__{} = user, field) when field in [:name, :user, :role, :vote, :voted?, :observer?] do
     Map.get(user, field)
   end
-
 
   def set_vote(%__MODULE__{} = user, vote) do
     %{user | vote: vote, voted?: !is_nil(vote)}

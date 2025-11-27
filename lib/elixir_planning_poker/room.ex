@@ -34,8 +34,8 @@ defmodule ElixirPlanningPoker.Room do
     GenServer.cast(via(room_code), {:select_card, user_token, card})
   end
 
-  def update_user_name(room_code, user_token, name) do
-    GenServer.cast(via(room_code), {:update_user_name, user_token, name})
+  def update_user(room_code, user_token, user_params) do
+    GenServer.cast(via(room_code), {:update_user, user_token, user_params})
   end
 
   def alter_room_status(room_code, user_token, status) do
@@ -105,10 +105,12 @@ defmodule ElixirPlanningPoker.Room do
   end
 
   @impl true
-  def handle_cast({:update_user_name, user_token, name}, state) do
+  def handle_cast({:update_user, user_token, user_params}, state) do
+    name = Map.get(user_params, :name, nil) || Map.get(user_params, "name", nil) || ""
+    icon = Map.get(user_params, :icon, nil) || Map.get(user_params, "icon", nil) || ""
     updated_users =
       Enum.map(state.users, fn user ->
-        if user.user == user_token, do: %{user | name: name}, else: user
+        if user.user == user_token, do: %{user | name: name, icon: icon}, else: user
       end)
 
     new_state = %{state | users: updated_users}

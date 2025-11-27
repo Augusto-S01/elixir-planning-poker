@@ -54,19 +54,19 @@ defmodule ElixirPlanningPokerWeb.RoomLive do
     |> assign_new_story_form()
   end
 
-  defp assign_form_ask_name(socket, state) do
-    form_ask_name =
-      case User.find_user(state.users, socket.assigns.user_token) do
-        {:ok, user} ->
-          User.changeset(user)
-        {:error, :not_found} ->
-          User.changeset(User.new(socket.assigns.user_token))
-      end
-      |> to_form(as: :user)
+defp assign_form_ask_name(socket, state) do
+  user =
+    case User.find_user(state.users, socket.assigns.user_token) do
+      {:ok, user} -> user
+      {:error, :not_found} -> User.new(socket.assigns.user_token)
+    end
 
-    socket
-    |> assign(:modal_ask_name_form, form_ask_name)
-  end
+  changeset = User.changeset(user, %{})
+
+  socket
+  |> assign(:modal_ask_name_form, to_form(changeset, as: :user))
+end
+
 
   defp assign_new_story_form(socket) do
     changeset = NewStory.changeset(%NewStory{}, %{})
@@ -91,7 +91,6 @@ defmodule ElixirPlanningPokerWeb.RoomLive do
     |> assign(:room_code, room_code)
     |> assign(:user_token, user_token)
     |> assign(:modal_ask_name, false)
-    |> assign(:modal_ask_name_form, %{"name" => ""})
     |> assign(:close_modal_ask_name, @close_modal_ask_name)
     |> assign(:close_room_config, @close_room_config)
     |> assign(:submit_room_config, @submit_room_config)
@@ -111,15 +110,12 @@ defmodule ElixirPlanningPokerWeb.RoomLive do
         modal_needed = is_nil(user.name) or String.trim(user.name) == ""
 
         assign(socket,
-          modal_ask_name_form: %{"name" => user.name || ""},
-          modal_ask_name: modal_needed
+          modal_ask_name: modal_needed,
+          new_user: false
         )
 
       {:error, :not_found} ->
-        new_user = User.new(user_token)
-
         assign(socket,
-          modal_ask_name_form: %{"name" => new_user.name},
           modal_ask_name: true,
           new_user: true
         )
@@ -177,26 +173,58 @@ defmodule ElixirPlanningPokerWeb.RoomLive do
     {:noreply, assign(socket, :show_room_config_modal, true)}
   end
 
-  def handle_event("submit_name", %{"user" => user_params}, socket) do
-    name = user_params["name"] |> String.trim()
-    case socket.assigns.new_user do
-      true ->
-        user =
-          socket.assigns.user_token
-          |> User.new(name)
-        RoomManager.add_user(
-          socket.assigns.room_code,
-          user
-        )
-      false ->
-        RoomManager.update_user_name(
-          socket.assigns.room_code,
-          socket.assigns.user_token,
-          name
-        )
+  def handle_event("submit_name", %{"user" => params}, socket) do
+  room_code  = socket.assigns.room_code
+  user_token = socket.assigns.user_token
+
+  user_lookup = User.find_user(socket.assigns.room.users, user_token)
+
+  base_user =
+    case user_lookup do
+      {:ok, user} ->
+        user
+
+      {:error, :not_found} ->
+        User.new(user_token)
     end
-    {:noreply, assign(socket, :modal_ask_name, false)}
+
+  changeset = User.changeset(base_user, params)
+
+  if changeset.valid? do
+    IO.inspect("Changeset válido, procedendo...", label: "Submit Name")
+    IO.inspect(changeset, label: "Changeset")
+    %User{name: name, icon: icon} = Ecto.Changeset.apply_changes(changeset)
+    IO.inspect(name, label: "User name to set")
+    IO.inspect(icon, label: "User icon to set")
+    case user_lookup do
+      {:ok, _existing_user} ->
+        RoomManager.update_user(
+          room_code,
+          user_token,
+          %{name: name, icon: icon}
+        )
+
+      {:error, :not_found} ->
+        new_user =
+          user_token
+          |> User.new(name)
+          |> Map.put(:icon, icon)
+
+        RoomManager.add_user(room_code, new_user)
+    end
+    socket =
+      socket
+      |> assign(:modal_ask_name, false)
+      |> assign(:modal_ask_name_form, to_form(changeset, as: :user))
+    {:noreply, socket}
+  else
+    IO.inspect("Changeset inválido, mostrando erros...", label: "Submit Name")
+    {:noreply, assign(socket, :modal_ask_name_form, to_form(changeset, as: :user))}
   end
+end
+
+
+
 
   def handle_event("open-profile-modal", _params, socket) do
     {:noreply, assign(socket, :modal_ask_name, true)}
@@ -479,6 +507,8 @@ defmodule ElixirPlanningPokerWeb.RoomLive do
     Enum.find(ordered, fn story -> story.id > current_id and is_nil(story.story_points) end) ||
     Enum.find(ordered, fn story -> is_nil(story.story_points) and story.id != current_id end)
   end
+
+  def format_icon_url(icon_name) do; "/images/profile_icons/#{icon_name}.png" end
 
   @impl true
   def handle_event(_event, _params, socket) do

@@ -244,9 +244,11 @@
                       ]}
                       title={user.name || "Unknown"}
                     >
-                      <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-base-content/50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
+                      <img
+                        src={format_icon_url(user.icon)}
+                        alt="Profile Icon"
+                        class="w-8 h-8 rounded-full"
+                      />
                     </div>
 
                     <!-- Hover actions: only for OTHER users -->
@@ -416,22 +418,47 @@
 >
   <:body>
     <.form
-      for={to_form(@modal_ask_name_form, as: :user)}
+      for={@modal_ask_name_form}
       id="user_form"
       phx-change="validate_name"
       phx-submit="submit_name"
       class="space-y-4"
       :let={f}
     >
-      <div>
-        <label class="block text-sm font-medium mb-2">Name</label>
-        <.input
-          type="text"
-          field={f[:name]}
-          class="input input-bordered w-full"
-        />
+      <.input
+        label="Name"
+        type="text"
+        field={f[:name]}
+        required
+      />
+
+      <div class="grid grid-cols-5 gap-3">
+        <label class="col-span-5 text-sm font-medium mb-2">
+          Choose your profile icon:
+        </label>
+
+        <%= for icon_name <- User.icon_profile_options do %>
+          <label class="cursor-pointer">
+            <input
+              type="radio"
+              name={f[:icon].name}
+              value={icon_name}
+              class="hidden peer"
+              checked={f[:icon].value == icon_name}
+            />
+            <div
+              class="w-12 h-12 rounded-full flex items-center justify-center border-2
+                    peer-checked:border-primary peer-checked:ring-2 peer-checked:ring-primary
+                    transition-all"
+              title={icon_name}
+            >
+              <img src={format_icon_url(icon_name)} alt={icon_name} class="w-8 h-8" />
+            </div>
+          </label>
+        <% end %>
       </div>
     </.form>
+
   </:body>
 
   <:footer>
