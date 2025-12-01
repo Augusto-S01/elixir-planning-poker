@@ -346,13 +346,30 @@
       </div>
       <span class="badge badge-sm">{length(@room.stories)}</span>
     </div>
+    <%= if @room.current_story do %>
+  <% voting_story = Enum.find(@room.stories, &(&1.id == @room.current_story)) %>
+
+  <div class="px-4 py-3 border-b border-base-300 bg-primary/5">
+    <p class="text-xs uppercase tracking-wide text-base-content/60 mb-1">
+      Voting Now
+    </p>
+    <p class="font-medium " title={voting_story.title}>
+      {voting_story.title}
+    </p>
+    <p class="text-[11px] text-base-content/70 ">
+      {voting_story.description}
+    </p>
+  </div>
+<% end %>
+
+    
 
     <!-- stories scroll area  -->
     <div class="flex-1 min-h-0 overflow-y-auto px-4 py-3 space-y-2">
       <%= if @room.stories == [] do %>
         <p class="text-sm text-base-content/70 italic">No stories yet.</p>
       <% else %>
-        <%= for story <- @room.stories do %>
+       <%= for story <- Enum.reject(@room.stories, &(&1.id == @room.current_story)) do %>
           <div class={[
             "border rounded-lg px-3 py-2 text-sm flex flex-col gap-1",
             @room.current_story == story.id && "border-primary bg-primary/5",
