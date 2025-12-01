@@ -256,11 +256,8 @@ defmodule ElixirPlanningPoker.Room do
   @impl true
   def handle_cast(:confirm_vote_and_go_next_story, state) do
 
-    vote =
-      case state.highlighted_vote do
-        nil -> Enum.max_by(state.results.vote_frequencies, fn {_v, c} -> c end) |> elem(0)
-        hv -> hv
-      end
+    vote = get_vote(state)
+    IO.inspect(vote, label: "Confirm vote and continue without story vote")
 
     new_current_story_id = state.results.next_story.id
     new_stories =
@@ -288,11 +285,8 @@ defmodule ElixirPlanningPoker.Room do
   @impl true
   def handle_cast(:confirm_vote_and_continue_without_story, state) do
 
-    vote =
-      case state.highlighted_vote do
-        nil -> Enum.max_by(state.results.vote_frequencies, fn {_v, c} -> c end) |> elem(0)
-        hv -> hv
-      end
+    vote = get_vote(state)
+    IO.inspect(vote, label: "Confirm vote and continue without story vote")
 
     new_stories =
       Enum.map(state.stories, fn story ->
@@ -312,6 +306,20 @@ defmodule ElixirPlanningPoker.Room do
       |> clear_votes()
     notify_room_new_voting_round(new_state)
     {:noreply, new_state}
+  end
+
+  defp get_vote(state) do
+    temp = case state.highlighted_vote do
+      nil ->
+        Enum.max_by(state.results.vote_frequencies, fn {_v, c} -> c end)
+        |> elem(0)
+      hv -> hv
+    end
+
+    case temp do
+      nil -> "?"
+      v -> v
+    end
   end
 
   @impl true
