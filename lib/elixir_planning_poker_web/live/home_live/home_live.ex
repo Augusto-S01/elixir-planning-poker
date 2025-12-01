@@ -56,7 +56,7 @@ defmodule ElixirPlanningPokerWeb.HomeLive do
       {:noreply,
        socket
        |> assign(:show_modal, false)
-       |> push_navigate(to: ~p"/rooms/#{room_params.room_code}")}
+       |> push_navigate(to: ~p"/room/#{room_params.room_code}")}
     else
       {:error, reason} ->
         {:noreply,

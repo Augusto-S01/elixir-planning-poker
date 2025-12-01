@@ -197,26 +197,30 @@
           <!-- ROUND TABLE -->
           <div class="relative w-full max-w-4xl aspect-[4/3] bg-base-100 border border-base-300 rounded-2xl shadow-lg overflow-hidden">
             <!-- Central "Table" -->
-          <div class="absolute inset-1/4 rounded-full bg-base-200 border border-base-300 flex items-center justify-center">
-            <div class="text-center px-6">
-              <p class="text-xs uppercase tracking-wide text-base-content/60 mb-1">
-                Current Story
-              </p>
+            <div class="absolute inset-1/4 rounded-full bg-base-200 border border-base-300 flex items-center justify-center overflow-hidden">
 
-              <%= if story = current_story(@room) do %>
-                <p class="font-semibold text-sm mb-1">
-                  {story.title}
+              <div class="text-center px-6 min-w-0 w-full">
+                <p class="text-xs uppercase tracking-wide text-base-content/60 mb-1">
+                  Current Story
                 </p>
-                <p class="text-xs text-base-content/70 line-clamp-3">
-                  {story.description}
-                </p>
-              <% else %>
-                <p class="text-sm text-base-content/70 italic">
-                  No story selected.
-                </p>
-              <% end %>
+
+                <%= if story = current_story(@room) do %>
+                  <p class="font-semibold text-sm mb-1 truncate">
+                    {story.title}
+                  </p>
+
+                  <p class="text-xs text-base-content/70 line-clamp-2">
+                    {story.description}
+                  </p>
+
+                <% else %>
+                  <p class="text-sm text-base-content/70 italic">
+                    No story selected.
+                  </p>
+                <% end %>
+              </div>
             </div>
-          </div>
+
 
              <!-- Participants around the table -->
             <div class="absolute inset-0">
@@ -395,13 +399,17 @@
         phx-submit="add-story"
         class="flex flex-col gap-2"
       >
-        <.input field={@new_story_form[:title]} label="Title" />
+        <.input field={@new_story_form[:title]} label="Title" class=" min-h-[30px] w-full border border-base-300 rounded-md px-3 py-2 text-sm
+                 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent
+                 resize-none bg-base-100" />
 
         <.input
           type="textarea"
           field={@new_story_form[:description]}
           label="Description"
-          class="min-h-[80px] w-full"
+          class="min-h-[80px] w-full border border-base-300 rounded-md px-3 py-2 text-sm
+                 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent
+                 resize-none bg-base-100"
         />
 
         <button class="btn btn-primary btn-sm self-end">Add</button>

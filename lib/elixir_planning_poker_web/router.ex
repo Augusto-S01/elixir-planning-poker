@@ -21,7 +21,7 @@ defmodule ElixirPlanningPokerWeb.Router do
     pipe_through :browser
 
     live "/", HomeLive, :index
-    live "/rooms/:room_code",  RoomLive, :room
+    live "/room/:room_code",  RoomLive, :room
   end
 
   # Other scopes may use custom stacks.
