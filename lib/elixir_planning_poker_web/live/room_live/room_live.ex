@@ -372,6 +372,12 @@ end
     {:noreply, socket}
   end
 
+  @impl true
+  def handle_event("poke", %{"from" => from, "to" => to}, socket) do
+    RoomManager.poke(socket.assigns.room_code, from, to)
+    {:noreply, socket}
+  end
+
   # --- info handlers ---
   @impl true
   def handle_info({@submit_room_config, new_state}, socket) do
@@ -482,6 +488,11 @@ end
       |> put_flash(:info, "A new voting round has started.")
       |> assign(:selected_card, nil)
     {:noreply, socket}
+  end
+
+  def handle_info({:room_poke, from, to}, socket) do
+    IO.inspect({from, to}, label: "Received poke event")
+    {:noreply, push_event(socket, "poke_animation", %{from: from, to: to})}
   end
 
   # --- private helpers ---

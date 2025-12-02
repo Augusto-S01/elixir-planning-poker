@@ -75,6 +75,11 @@ defmodule ElixirPlanningPoker.Room do
     GenServer.cast(via(room_code), {:highlight_vote, vote})
   end
 
+  def poke(room_code, from_user_token, to_user_token) do
+    GenServer.cast(via(room_code), {:poke, from_user_token, to_user_token})
+  end
+
+
   def confirm_vote_and_go_next_story(room_code) do
     GenServer.cast(via(room_code), :confirm_vote_and_go_next_story)
   end
@@ -312,6 +317,12 @@ defmodule ElixirPlanningPoker.Room do
     {:noreply, new_state}
   end
 
+  @impl true
+  def handle_cast({:poke, from, to}, state) do
+    notify_room_poke(state, from, to)
+    {:noreply, state}
+  end
+
   defp get_vote(state) do
     temp = case state.highlighted_vote do
       nil ->
@@ -528,6 +539,15 @@ defmodule ElixirPlanningPoker.Room do
       {:room_new_voting_round, state}
     )
   end
+
+  defp notify_room_poke(state, from, to) do
+    Phoenix.PubSub.broadcast(
+      ElixirPlanningPoker.PubSub,
+      "room:#{state.room_code}",
+      {:room_poke, from, to}
+    )
+  end
+
 
   defp via(room_code),
     do: {:via, Registry, {ElixirPlanningPoker.RoomRegistry, room_code}}

@@ -152,3 +152,15 @@
   animation: modal-out 0.35s ease-in forwards;
 }
 
+.paper-ball {
+  width: 18px;
+  height: 18px;
+  filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.25));
+}
+
+.paper-ball svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+

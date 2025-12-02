@@ -26,12 +26,14 @@ import {hooks as colocatedHooks} from "phoenix-colocated/elixir_planning_poker"
 import topbar from "../vendor/topbar"
 import { DealCards } from "./hooks/deal_card";
 import { CopyToClipboard } from "./hooks/copy_to_clipboard";
+import { PokeAnimationHook } from "./hooks/poke_animation_hook";
 
 let Hooks = {}
 
 
 Hooks.DealCards = DealCards;
 Hooks.CopyToClipboard = CopyToClipboard;  
+Hooks.PokeAnimationHook = PokeAnimationHook;
 
 
 const csrfToken = document.querySelector("meta[name='csrf-token']").getAttribute("content")

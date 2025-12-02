@@ -239,22 +239,22 @@
                     </span>
 
                     <!-- Avatar -->
-                    <div
-                      class={[
-                        "w-12 h-12 rounded-full border-2 flex items-center justify-center text-sm font-semibold transition-all",
-                        user.voted? && "border-success shadow-md",
-                        !user.voted? && "border-base-300 bg-base-200",
-                        user.user == @user_token && "ring-2 ring-primary ring-offset-2 ring-offset-base-100"
-                      ]}
-                      title={user.name || "Unknown"}
-                    >
-                      <img
-                        src={format_icon_url(user.icon)}
-                        alt="Profile Icon"
-                        class="w-8 h-8 rounded-full"
-                      />
-                    </div>
-
+                  <div
+                    id={"avatar-#{user.user}"}
+                    class={[
+                      "w-12 h-12 rounded-full border-2 flex items-center justify-center text-sm font-semibold transition-all",
+                      user.voted? && "border-success shadow-md",
+                      !user.voted? && "border-base-300 bg-base-200",
+                      user.user == @user_token && "ring-2 ring-primary ring-offset-2 ring-offset-base-100"
+                    ]}
+                    title={user.name || "Unknown"}
+                  >
+                    <img
+                      src={format_icon_url(user.icon)}
+                      alt="Profile Icon"
+                      class="w-8 h-8 rounded-full"
+                    />
+                  </div>
                     <!-- Hover actions: only for OTHER users -->
                     <%= if user.user != @user_token do %>
                       <div class="pointer-events-none absolute -bottom-10 left-1/2 -translate-x-1/2 opacity-0 translate-y-1 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-150">
@@ -263,7 +263,8 @@
                           <button
                             type="button"
                             phx-click="poke"
-                            phx-value-user={user.user}
+                            phx-value-from={@user_token}
+                            phx-value-to={user.user}
                             class="btn btn-ghost btn-xs px-1"
                             title="Poke"
                           >
@@ -289,9 +290,12 @@
                   </div>
                 </div>
               <% end %>
+              <div
+                id="poke-animation-layer"
+                phx-hook="PokeAnimationHook"
+                class="pointer-events-none absolute inset-0 z-20"
+              ></div>
             </div>
-
-          
           </div>
         <% end %>
       </div>
@@ -341,23 +345,22 @@
       <span class="badge badge-sm">{length(@room.stories)}</span>
     </div>
     <%= if @room.current_story do %>
-  <% voting_story = Enum.find(@room.stories, &(&1.id == @room.current_story)) %>
+      <% voting_story = Enum.find(@room.stories, &(&1.id == @room.current_story)) %>
+      <div class="px-4 py-3 border-b border-base-300 bg-primary/5" 
+      >
+        <p class="text-xs uppercase tracking-wide text-base-content/60 mb-1">
+         Voting Now
+        </p>
+        <p class="font-medium " title={voting_story.title}>
+          {voting_story.title}
+        </p>
+        <p class="text-[11px] text-base-content/70 ">
+          {voting_story.description}
+        </p>
+      </div>
+    <% end %>
 
-  <div class="px-4 py-3 border-b border-base-300 bg-primary/5">
-    <p class="text-xs uppercase tracking-wide text-base-content/60 mb-1">
-      Voting Now
-    </p>
-    <p class="font-medium " title={voting_story.title}>
-      {voting_story.title}
-    </p>
-    <p class="text-[11px] text-base-content/70 ">
-      {voting_story.description}
-    </p>
-  </div>
-<% end %>
-
-    
-
+  
     <!-- stories scroll area  -->
     <div class="flex-1 min-h-0 overflow-y-auto px-4 py-3 space-y-2">
       <%= if @room.stories == [] do %>
