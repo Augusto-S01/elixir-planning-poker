@@ -25,17 +25,15 @@ import {LiveSocket} from "phoenix_live_view"
 import {hooks as colocatedHooks} from "phoenix-colocated/elixir_planning_poker"
 import topbar from "../vendor/topbar"
 import { DealCards } from "./hooks/deal_card";
+import { CopyToClipboard } from "./hooks/copy_to_clipboard";
 
 let Hooks = {}
-Hooks.CopyToClipboard = {
-  mounted() {
-    this.handleEvent("copy_to_clipboard", ({ text }) => {
-      navigator.clipboard.writeText(text)
-    })
-  }
-}
+
 
 Hooks.DealCards = DealCards;
+Hooks.CopyToClipboard = CopyToClipboard;  
+
+
 const csrfToken = document.querySelector("meta[name='csrf-token']").getAttribute("content")
 const liveSocket = new LiveSocket("/live", Socket, {
   longPollFallbackMs: 2500,
