@@ -1,546 +1,595 @@
 <div class="h-screen overflow-hidden">
   <div class="h-full flex flex-col">
 
-<header class="border-b border-base-300 bg-base-100 px-6 py-3 flex items-center justify-between gap-4" phx-hook="CopyToClipboard" id="room-header">
-    <div class="flex items-center gap-10">
-      <div class="flex flex-col">
-        <span class="text-[11px] uppercase tracking-wide text-base-content/60">
-          Room
-        </span>
-        <span class="text-lg font-semibold text-base-content">
-          {@room.name}
-        </span>
-      </div>
+    <header class="border-b border-base-300 bg-base-100 px-6 py-3 flex items-center justify-between gap-4" phx-hook="CopyToClipboard" id="room-header">
+      <div class="flex items-center gap-10">
+        <div class="flex flex-col">
+          <span class="text-[11px] uppercase tracking-wide text-base-content/60">
+            Room
+          </span>
+          <span class="text-lg font-semibold text-base-content">
+            {@room.name}
+          </span>
+        </div>
 
-      <div class="tooltip tooltip-bottom" id="copy-room-link-tooltip" data-tip="Copy room link">
-        <span
-          id="copy-room-link-btn"
-          phx-click="copy-room-code"
-          class="inline-flex items-center gap-2 px-3 py-1.5 rounded-md font-mono text-sm
+        <div class="tooltip tooltip-bottom" id="copy-room-link-tooltip" data-tip="Copy room link">
+          <span
+            id="copy-room-link-btn"
+            phx-click="copy-room-code"
+            class="inline-flex items-center gap-2 px-3 py-1.5 rounded-md font-mono text-sm
                 bg-base-200 hover:bg-base-300 text-base-content
                 cursor-pointer select-none
                 transition-all duration-300 ease-out hover:shadow-md hover:shadow-primary/30
                 hover:scale-[1.03] active:scale-[0.97]"
-        >
-          <span>Code: {@room_code}</span>
+          >
+            <span>Code: {@room_code}</span>
 
-          <svg xmlns="http://www.w3.org/2000/svg"
+            <svg xmlns="http://www.w3.org/2000/svg"
               class="w-4 h-4 opacity-70 group-hover:opacity-100 transition-opacity"
               viewBox="0 0 24 24" fill="none" stroke="currentColor">
-            <rect x="9" y="9" width="13" height="13" rx="2" ry="2" ry="2" stroke-width="2"/>
-            <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" stroke-width="2"/>
-          </svg>
-        </span>
+              <rect x="9" y="9" width="13" height="13" rx="2" ry="2" ry="2" stroke-width="2"/>
+              <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" stroke-width="2"/>
+            </svg>
+          </span>
+        </div>
       </div>
 
+      <div class="flex items-center gap-4">
+        <!-- Host Panel -->
+        <%= if User.is_host?(@room.users, @user_token) do %>
+          <div class="flex items-center gap-2">
+            <.button
+              phx-click="open-room-config"
+              class="btn btn-ghost btn-circle"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37a1.724 1.724 0 002.572-1.065z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+            </.button>
 
-    </div>
+            <%= if @room.state == :waiting do %>
+              <.button
+                phx-click="alter-status"
+                phx-value-status="voting"
+                class="btn btn-primary "
+              >
+                Start Voting
+              </.button>
+            <% end %>
 
-    <div class="flex items-center gap-4">
-      <!-- Host Panel -->
-      <%= if User.is_host?(@room.users, @user_token) do %>
-        <div class="flex items-center gap-2">
+            <%= if @room.state == :voting do %>
+              <.button
+                phx-click="reveal-votes"
+                phx-value-force={"false"}
+                class="btn btn-primary "
+              >
+                Show Results
+              </.button>
+            <% end %>
+          </div>
+        <% end %>
+
+        <!-- Profile Button (opens name/icon modal) -->
+        <%= if Enum.find(@room.users, &(&1.user == @user_token)) do %>
           <.button
-            phx-click="open-room-config"
+            phx-click="open-profile-modal"
             class="btn btn-ghost btn-circle"
           >
             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37a1.724 1.724 0 002.572-1.065z" />
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
           </.button>
+        <% end %>
+      </div>
+    </header>
 
-          <%= if @room.state == :waiting do %>
-            <.button
-              phx-click="alter-status"
-              phx-value-status="voting"
-              class="btn btn-primary "
-            >
-             Start Voting
-            </.button>
-          <% end %>
+    <!-- MAIN + ASIDE -->
+    <div class="flex flex-1 h-full overflow-hidden">
+      <!-- MAIN CONTENT -->
+      <section class="flex flex-1 overflow-hidden">
+        <!-- TABLE / RESULTS -->
+        <div class="flex-1 flex flex-col p-6 gap-4">
+          <div class="flex-1 flex items-center justify-center">
+            <!-- When revealed, show results -->
+            <%= if @room.state == :revealed and @room.results do %>
+              <div class="max-w-3xl w-full bg-base-100 border border-base-300 rounded-xl shadow-lg p-6 flex flex-col gap-6">
+                <!-- TITLE -->
+                <h2 class="text-xl font-bold flex items-center gap-2">
+                  <span class="text-2xl">📊</span>
+                  Voting Results
+                </h2>
 
-          <%= if @room.state == :voting do %>
-            <.button
-              phx-click="reveal-votes"
-              phx-value-force={"false"}
-              class="btn btn-primary "
-            >
-             Show Results
-            </.button>
-          <% end %>
+                <!-- STORY INFO -->
+                <div>
+                  <p class="text-xs uppercase tracking-wide text-base-content/60 mb-1">
+                    Current Story
+                  </p>
 
-        
-        </div>
-      <% end %>
-      
-      <!-- Profile Button (opens name/icon modal) -->
-      <%= if Enum.find(@room.users, &(&1.user == @user_token)) do %>
-        <.button
-          phx-click="open-profile-modal"
-          class="btn btn-ghost btn-circle"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-        </.button>
-      <% end %>
-    </div>
-</header>
-
-<!-- MAIN + ASIDE -->
-<div class="flex flex-1 h-full overflow-hidden">
-<!-- MAIN AREA -->
-<!-- MAIN CONTENT -->
-  <section class="flex flex-1 overflow-hidden">
-    <!-- TABLE / RESULTS -->
-    <div class="flex-1 flex flex-col p-6 gap-4">
-      <div class="flex-1 flex items-center justify-center">
-        <!-- When revealed, show results -->
-        <%= if @room.state == :revealed and @room.results do %>
-          <div class="max-w-xl w-full bg-base-100 border border-base-300 rounded-xl shadow-lg p-6 flex flex-col gap-4">
-
-            <%= if all_stories_have_points?(@room) do %>
-            <h2 class="text-lg font-semibold mb-2 flex items-center gap-2">
-              <span class="text-2xl">🎉</span>
-              Voting Completed!
-            </h2>
-            <% end %>
-
-            <h2 class="text-lg font-semibold mb-2 flex items-center gap-2">
-              <span class="text-2xl">📊</span>
-              Voting Results
-            </h2>
-
-            <div class="space-y-3">
-              <div>
-                <p class="text-xs uppercase tracking-wide text-base-content/60 mb-1">
-                  Current Story
-                </p>
-                <%= case @room.results.story do %>
-                  <% nil -> %>
-                    <p class="text-sm text-base-content/70 italic">
+                  <%= if story = @room.results.story do %>
+                    <p class="text-base font-semibold">{story.title}</p>
+                    <p class="text-sm text-base-content/70">{story.description}</p>
+                  <% else %>
+                    <p class="text-sm italic text-base-content/70">
                       No story selected.
                     </p>
-                  <% _ ->  %>
-                      <p class="text-sm font-medium">
-                        {@room.results.story.title}
-                      </p>
-                      <p class="text-xs text-base-content/70">
-                        {@room.results.story.description}
-                      </p>
-                <% end %>
-              </div>
-
-              <div>
-                <p class="text-xs uppercase tracking-wide text-base-content/60 mb-1">
-                  Agreement Level
-                </p>
-                <p class="text-sm">
-                  {format_agreement(@room.results.agreement)}
-                </p>
-              </div>
-
-              <div>
-                <p class="text-xs uppercase tracking-wide text-base-content/60 mb-1">
-                  Vote Distribution
-                </p>
-                <div class="flex flex-wrap gap-2">
-                  <%= for {vote, count} <- @room.results.vote_frequencies do %>
-                    <div
-                      phx-click="highlight-vote"
-                      phx-value-vote={vote} 
-                      class={"badge badge-outline gap-1 px-3 py-2 flex items-center gap-2 :hover:bg-base-200 :hover transition-colors cursor-pointer " 
-                      <> if @room.highlighted_vote == vote, do: "badge-primary", else: ""}
-                    >
-                      <span class="font-mono">{vote || "—"}</span>
-                      <span class="text-xs text-base-content/70">x{count}</span>
-                    </div>
                   <% end %>
-
-
                 </div>
-              </div>
-            </div>
 
-          <div class="mt-4 flex flex-wrap gap-2 justify-between">
-            <%= if User.is_host?(@room.users, @user_token) do %>
-              <%= if story = get_next_story(@room) do %>
-                <.button
-                  type="button"
-                  phx-click="confirm-vote-and-go-next-story"
-                  class="btn btn-sm btn-primary line-clamp-1 max-w-1/2"
-                >
-                  Go to Next Story: {story.title}
-                </.button>
-              <% else %>
-                <.button
-                  type="button"
-                  phx-click="confirm_vote_and_continue_without_story"
-                  class="btn btn-sm btn-primary"
-                >
-                  Vote without selecting a story
-                </.button>
-              <% end %>
+                <!-- AGREEMENT -->
+                <div>
+                  <p class="text-xs uppercase tracking-wide text-base-content/60 mb-1">
+                    Agreement Level
+                  </p>
+                  <p class="text-sm">
+                    {format_agreement(@room.results.agreement)}
+                  </p>
+                </div>
 
-              <button
-                type="button"
-                phx-click="reopen-voting"
-                class="btn btn-sm btn-outline"
-              >
-                reopen voting
-              </button>
-            <% end %>
-          </div>
-        </div> 
-        <% else %>
-          <!-- ROUND TABLE -->
-          <div class="relative w-full max-w-4xl aspect-[4/3] bg-base-100 border border-base-300 rounded-2xl shadow-lg overflow-hidden">
-            <!-- Central "Table" -->
-            <div class="absolute inset-1/4 rounded-full bg-base-200 border border-base-300 flex items-center justify-center overflow-hidden">
+                <!-- PIE CHART + DISTRIBUTION -->
+                <div class="flex flex-col md:flex-row gap-6 items-center justify-center md:justify-start">
+                  <!-- SVG PIE / DONUT -->
+                  <div class="relative w-40 h-40">
+                    <svg viewBox="0 0 36 36" class="w-full h-full -rotate-90">
+                      <!-- base circle (background) -->
+                      <circle
+                        cx="18"
+                        cy="18"
+                        r="16"
+                        fill="none"
+                        stroke="#E5E7EB"
+                        stroke-width="4"
+                      />
+                      <!-- segments -->
+                      <%= for {seg, idx} <- Enum.with_index(pie_chart_segments(@room.results.vote_frequencies)) do %>
+                        <circle
+                          cx="18"
+                          cy="18"
+                          r="16"
+                          fill="none"
+                          stroke={pie_color(idx)}
+                          stroke-width="4"
+                          stroke-dasharray={seg.dash}
+                          stroke-dashoffset={seg.offset}
+                          stroke-linecap="butt"
+                        />
+                      <% end %>
+                    </svg>
+                    <div class="absolute inset-0 flex items-center justify-center">
+                      <span class="text-lg font-bold">
+                        {total_votes(@room)} votes
+                      </span>
+                    </div>
+                  </div>
 
-              <div class="text-center px-6 min-w-0 w-full">
-                <p class="text-xs uppercase tracking-wide text-base-content/60 mb-1">
-                  Current Story
+                  <!-- VOTE FREQUENCIES LIST -->
+                  <div>
+                    <p class="text-xs uppercase tracking-wide text-base-content/60 mb-2">
+                      Vote Distribution
+                    </p>
+
+                    <div class="flex flex-col gap-2">
+                      <%= for {vote, count} <- @room.results.vote_frequencies do %>
+                        <%= if not is_nil(vote) and count > 0 do %>
+                          <div
+                            phx-click="highlight-vote"
+                            phx-value-vote={vote}
+                            class={[
+                              "cursor-pointer px-3 py-2 rounded-md border flex items-center justify-between gap-3 transition-all",
+                              @room.highlighted_vote == vote && "border-primary bg-primary/10",
+                              @room.highlighted_vote != vote && "border-base-300 hover:bg-base-200"
+                            ]}
+                          >
+                            <span class="font-mono">{vote}</span>
+                            <span class="text-sm opacity-70">x{count}</span>
+                          </div>
+                        <% end %>
+                      <% end %>
+                    </div>
+                  </div>
+                </div>
+
+              <!-- ALWAYS SHOW INDIVIDUAL VOTES -->
+              <div class="mt-4">
+                <p class="text-xs uppercase tracking-wide text-base-content/60 mb-2">
+                  Individual Votes
                 </p>
 
-                <%= if story = current_story(@room) do %>
-                  <p class="font-semibold text-sm mb-1 truncate">
-                    {story.title}
-                  </p>
-
-                  <p class="text-xs text-base-content/70 line-clamp-2">
-                    {story.description}
-                  </p>
-
+                <%= if votes_for_display(@room) == [] do %>
+                  <p class="text-sm text-base-content/70 italic">No votes yet.</p>
                 <% else %>
-                  <p class="text-sm text-base-content/70 italic">
-                    No story selected.
-                  </p>
-                <% end %>
-              </div>
-            </div>
-
-
-             <!-- Participants around the table -->
-            <div class="absolute inset-0">
-              <%= for {user, idx} <- Enum.with_index(@room.users) do %>
-                <div
-                  style={seat_position_style(idx, length(@room.users))}
-                  class="absolute -translate-x-1/2 -translate-y-1/2"
-                >
-                  <div class="group relative flex flex-col items-center gap-1">
-                    <!-- Name above avatar -->
-                    <span
-                      class="text-[11px] max-w-[90px] truncate text-base-content/80 text-center"
-                      title={user.name || "Unknown"}
-                    >
-                      {user.name || "Anonymous"}
-                    </span>
-
-                    <!-- Avatar -->
-                  <div
-                    id={"avatar-#{user.user}"}
-                    class={[
-                      "w-12 h-12 rounded-full border-2 flex items-center justify-center text-sm font-semibold transition-all",
-                      user.voted? && "border-success shadow-md",
-                      !user.voted? && "border-base-300 bg-base-200",
-                      user.user == @user_token && "ring-2 ring-primary ring-offset-2 ring-offset-base-100"
-                    ]}
-                    title={user.name || "Unknown"}
-                  >
-                    <img
-                      src={format_icon_url(user.icon)}
-                      alt="Profile Icon"
-                      class="w-8 h-8 rounded-full"
-                    />
-                  </div>
-                    <!-- Hover actions: only for OTHER users -->
-                    <%= if user.user != @user_token do %>
-                      <div class="pointer-events-none absolute -bottom-10 left-1/2 -translate-x-1/2 opacity-0 translate-y-1 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-150">
-                        <div class="pointer-events-auto bg-base-100 border border-base-300 rounded-full shadow-lg px-2 py-1 flex items-center gap-1">
-                          <!-- Poke -->
-                          <button
-                            type="button"
-                            phx-click="poke"
-                            phx-value-from={@user_token}
-                            phx-value-to={user.user}
-                            class="btn btn-ghost btn-xs px-1"
-                            title="Poke"
-                          >
-                            😜
-                          </button>
-
-                          <!-- The options below only appear if the VIEWER is host -->
-                          <%= if User.is_host?(@room.users, @user_token) do %>
-                            <!-- Pass leadership -->
-                            <button
-                              type="button"
-                              phx-click="pass-leadership"
-                              phx-value-user={user.user}
-                              class="btn btn-ghost btn-xs px-1"
-                              title="Make host"
-                            >
-                              👑
-                            </button>
-                          <% end %>
+                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <%= for %{name: name, vote: vote, user: token} <- votes_for_display(@room) do %>
+                      <div class={[
+                        "flex items-center gap-3 border rounded-lg p-2 transition",
+                        @room.highlighted_vote == vote && "border-primary bg-primary/10"
+                      ]}>
+                        <img
+                          src={format_icon_url(icon_for_user(@room, token))}
+                          class="w-10 h-10 rounded-full border border-base-300"
+                        />
+                        <div class="flex flex-col">
+                          <span class="font-medium">{name}</span>
+                          <span class="font-mono text-sm text-base-content/70">Vote: {vote}</span>
                         </div>
                       </div>
                     <% end %>
                   </div>
-                </div>
-              <% end %>
-              <div
-                id="poke-animation-layer"
-                phx-hook="PokeAnimationHook"
-                class="pointer-events-none absolute inset-0 z-20"
-              ></div>
-            </div>
-          </div>
-        <% end %>
-      </div>
-
-      <!-- Player's cards (bottom of the screen) -->
-      <%= if @room.state == :voting and @room.cards != [] do %>
-        <%= if current_user = Enum.find(@room.users, &(&1.user == @user_token)) do %>
-          <div class="mt-2 flex flex-col gap-2">
-            <p class="text-xs uppercase tracking-wide text-base-content/60">
-              Your cards
-            </p>
-            <div phx-hook="DealCards" id="player-cards-container" >
-            <div class="flex flex-wrap gap-2">
-              <%= for card <- @room.cards do %>
-                <button
-                  type="button"
-                  phx-click="select-card"
-                  phx-value-card={card}
-                  class={[
-                    "player-card",  
-                    "btn btn-sm rounded-md min-w-[3rem] font-mono transition-all",
-                    current_user.vote == card && "btn-primary",
-                    current_user.vote != card && "btn-ghost border border-base-300",
-                    @selected_card == card && "scale-110 shadow-lg ring-2 ring-primary",
-                  ]}
-                >
-                  {card}
-                </button>
-              <% end %>
-            </div>
-          </div>
-
-          </div>
-        <% end %>
-      <% end %>
-    </div>
-  </section>
-
-  <!-- SIDEBAR / STORIES -->
-  <aside class="w-80 border-l border-base-300 bg-base-100 flex flex-col h-full overflow-hidden">
-    <!-- Header stories (fixed) -->
-    <div class="px-4 py-3 border-b border-base-200 flex items-center justify-between shrink-0">
-      <div>
-        <p class="text-xs uppercase tracking-wide text-base-content/60">Stories</p>
-        <p class="text-sm font-semibold">Backlog for voting</p>
-      </div>
-      <span class="badge badge-sm">{length(@room.stories)}</span>
-    </div>
-    <%= if @room.current_story do %>
-      <% voting_story = Enum.find(@room.stories, &(&1.id == @room.current_story)) %>
-      <div class="px-4 py-3 border-b border-base-300 bg-primary/5" 
-      >
-        <p class="text-xs uppercase tracking-wide text-base-content/60 mb-1">
-         Voting Now
-        </p>
-        <p class="font-medium " title={voting_story.title}>
-          {voting_story.title}
-        </p>
-        <p class="text-[11px] text-base-content/70 ">
-          {voting_story.description}
-        </p>
-      </div>
-    <% end %>
-
-  
-    <!-- stories scroll area  -->
-    <div class="flex-1 min-h-0 overflow-y-auto px-4 py-3 space-y-2">
-      <%= if @room.stories == [] do %>
-        <p class="text-sm text-base-content/70 italic">No stories yet.</p>
-      <% else %>
-       <%= for story <- Enum.reject(@room.stories, &(&1.id == @room.current_story)) do %>
-          <div class={[
-            "border rounded-lg px-3 py-2 text-sm flex flex-col gap-1",
-            @room.current_story == story.id && "border-primary bg-primary/5",
-            @room.current_story != story.id && "border-base-300"
-          ]}>
-            <div>
-              <p class="font-medium truncate" title={story.title}>{story.title}</p>
-              <p class="text-[11px] text-base-content/70 line-clamp-2">{story.description}</p>
-              <p class="text-xs text-base-content/70">Story Points: {story.story_points || "Not assigned"}</p>
-            </div>
-
-            <div class="mt-1 flex items-center justify-between">
-              <div class="flex gap-1">
-                <button phx-click="select-story" phx-value-story-id={story.id}
-                        class="btn btn-xs btn-outline">
-                  Select
-                </button>
-                <button phx-click="remove-story" phx-value-story-id={story.id}
-                        class="btn btn-xs btn-ghost text-error">
-                  Remove
-                </button>
+                <% end %>
               </div>
 
-              <%= if story[:decisive_vote] do %>
-                <span class="badge badge-ghost badge-xs">
-                  Final: {story.decisive_vote}
-                </span>
-              <% end %>
-            </div>
+
+                <!-- ACTION BUTTONS -->
+                <div class="mt-4 flex flex-wrap gap-2 justify-end">
+                  <%= if User.is_host?(@room.users, @user_token) do %>
+                    <%= if story = get_next_story(@room) do %>
+                      <.button
+                        phx-click="confirm-vote-and-go-next-story"
+                        class="btn btn-sm btn-primary"
+                      >
+                        Next Story: {story.title}
+                      </.button>
+                    <% else %>
+                      <.button
+                        phx-click="confirm_vote_and_continue_without_story"
+                        class="btn btn-sm btn-primary"
+                      >
+                        Continue Without Story
+                      </.button>
+                    <% end %>
+
+                    <button
+                      type="button"
+                      phx-click="reopen-voting"
+                      class="btn btn-sm btn-outline"
+                    >
+                      Reopen Voting
+                    </button>
+                  <% end %>
+                </div>
+              </div>
+            <% else %>
+              <!-- ROUND TABLE -->
+              <div class="relative w-full max-w-4xl h-full bg-base-100 border border-base-300 rounded-2xl shadow-lg overflow-hidden">
+                <!-- Central "Table" -->
+                <div class="absolute inset-1/4 rounded-full bg-base-200 border border-base-300 flex items-center justify-center overflow-hidden">
+                  <div class="text-center px-6 min-w-0 w-full">
+                    <p class="text-xs uppercase tracking-wide text-base-content/60 mb-1">
+                      Current Story
+                    </p>
+
+                    <%= if story = current_story(@room) do %>
+                      <p class="font-semibold text-sm mb-1 truncate">
+                        {story.title}
+                      </p>
+
+                      <p class="text-xs text-base-content/70 line-clamp-2">
+                        {story.description}
+                      </p>
+                    <% else %>
+                      <p class="text-sm text-base-content/70 italic">
+                        No story selected.
+                      </p>
+                    <% end %>
+                  </div>
+                </div>
+
+                <!-- Participants around the table -->
+                <div class="absolute inset-0">
+                  <%= for {user, idx} <- Enum.with_index(@room.users) do %>
+                    <div
+                      style={seat_position_style(idx, length(@room.users))}
+                      class="absolute -translate-x-1/2 -translate-y-1/2"
+                    >
+                      <div class="group relative flex flex-col items-center gap-1">
+                        <!-- Name above avatar -->
+                        <span
+                          class="text-[11px] max-w-[90px] truncate text-base-content/80 text-center"
+                          title={user.name || "Unknown"}
+                        >
+                          {user.name || "Anonymous"}
+                        </span>
+
+                        <!-- Avatar -->
+                        <div
+                          id={"avatar-#{user.user}"}
+                          class={[
+                            "w-12 h-12 rounded-full border-2 flex items-center justify-center text-sm font-semibold transition-all",
+                            user.voted? && "border-success shadow-md",
+                            !user.voted? && "border-base-300 bg-base-200",
+                            user.user == @user_token && "ring-2 ring-primary ring-offset-2 ring-offset-base-100"
+                          ]}
+                          title={user.name || "Unknown"}
+                        >
+                          <img
+                            src={format_icon_url(user.icon)}
+                            alt="Profile Icon"
+                            class="w-8 h-8 rounded-full"
+                          />
+                        </div>
+
+                        <!-- Hover actions: only for OTHER users -->
+                        <%= if user.user != @user_token do %>
+                          <div class="pointer-events-none absolute -bottom-10 left-1/2 -translate-x-1/2 opacity-0 translate-y-1 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-150">
+                            <div class="pointer-events-auto bg-base-100 border border-base-300 rounded-full shadow-lg px-2 py-1 flex items-center gap-1">
+                              <!-- Poke -->
+                              <button
+                                type="button"
+                                phx-click="poke"
+                                phx-value-from={@user_token}
+                                phx-value-to={user.user}
+                                class="btn btn-ghost btn-xs px-1"
+                                title="Poke"
+                              >
+                                😜
+                              </button>
+
+                              <!-- The options below only appear if the VIEWER is host -->
+                              <%= if User.is_host?(@room.users, @user_token) do %>
+                                <!-- Pass leadership -->
+                                <button
+                                  type="button"
+                                  phx-click="pass-leadership"
+                                  phx-value-user={user.user}
+                                  class="btn btn-ghost btn-xs px-1"
+                                  title="Make host"
+                                >
+                                  👑
+                                </button>
+                              <% end %>
+                            </div>
+                          </div>
+                        <% end %>
+                      </div>
+                    </div>
+                  <% end %>
+
+                  <div
+                    id="poke-animation-layer"
+                    phx-hook="PokeAnimationHook"
+                    class="pointer-events-none absolute inset-0 z-20"
+                  ></div>
+                </div>
+              </div>
+            <% end %>
+          </div>
+
+          <!-- Player's cards (bottom of the screen) -->
+          <%= if @room.state == :voting and @room.cards != [] do %>
+            <%= if current_user = Enum.find(@room.users, &(&1.user == @user_token)) do %>
+              <div class="mt-2 flex flex-col gap-2">
+                <p class="text-xs uppercase tracking-wide text-base-content/60">
+                  Your cards
+                </p>
+                <div phx-hook="DealCards" id="player-cards-container">
+                  <div class="flex flex-wrap gap-2">
+                    <%= for card <- @room.cards do %>
+                      <button
+                        type="button"
+                        phx-click="select-card"
+                        phx-value-card={card}
+                        class={[
+                          "player-card",
+                          "btn btn-sm rounded-md min-w-[3rem] font-mono transition-all",
+                          current_user.vote == card && "btn-primary",
+                          current_user.vote != card && "btn-ghost border border-base-300",
+                          @selected_card == card && "scale-110 shadow-lg ring-2 ring-primary",
+                        ]}
+                      >
+                        {card}
+                      </button>
+                    <% end %>
+                  </div>
+                </div>
+              </div>
+            <% end %>
+          <% end %>
+        </div>
+      </section>
+
+      <!-- SIDEBAR / STORIES -->
+      <aside class="w-80 border-l border-base-300 bg-base-100 flex flex-col h-full overflow-hidden">
+        <!-- Header stories (fixed) -->
+        <div class="px-4 py-3 border-b border-base-200 flex items-center justify-between shrink-0">
+          <div>
+            <p class="text-xs uppercase tracking-wide text-base-content/60">Stories</p>
+            <p class="text-sm font-semibold">Backlog for voting</p>
+          </div>
+          <span class="badge badge-sm">{length(@room.stories)}</span>
+        </div>
+
+        <%= if @room.current_story do %>
+          <% voting_story = Enum.find(@room.stories, &(&1.id == @room.current_story)) %>
+          <div class="px-4 py-3 border-b border-base-300 bg-primary/5">
+            <p class="text-xs uppercase tracking-wide text-base-content/60 mb-1">
+              Voting Now
+            </p>
+            <p class="font-medium " title={voting_story.title}>
+              {voting_story.title}
+            </p>
+            <p class="text-[11px] text-base-content/70 ">
+              {voting_story.description}
+            </p>
           </div>
         <% end %>
-      <% end %>
-    </div>
 
-    <!-- New story form  -->
-    <div class="px-4 py-3 border-t border-base-200 bg-base-200 shrink-0">
-      <p class="text-xs uppercase tracking-wide text-base-content/60 mb-2">
-        New story
-      </p>
+        <!-- stories scroll area  -->
+        <div class="flex-1 min-h-0 overflow-y-auto px-4 py-3 space-y-2">
+          <%= if @room.stories == [] do %>
+            <p class="text-sm text-base-content/70 italic">No stories yet.</p>
+          <% else %>
+            <%= for story <- Enum.reject(@room.stories, &(&1.id == @room.current_story)) do %>
+              <div class={[
+                "border rounded-lg px-3 py-2 text-sm flex flex-col gap-1",
+                @room.current_story == story.id && "border-primary bg-primary/5",
+                @room.current_story != story.id && "border-base-300"
+              ]}>
+                <div>
+                  <p class="font-medium truncate" title={story.title}>{story.title}</p>
+                  <p class="text-[11px] text-base-content/70 line-clamp-2">{story.description}</p>
+                  <p class="text-xs text-base-content/70">Story Points: {story.story_points || "Not assigned"}</p>
+                </div>
 
-      <.form
-        for={@new_story_form}
-        phx-change="validate-story-form"
-        phx-submit="add-story"
-        class="flex flex-col gap-2"
-      >
-        <.input field={@new_story_form[:title]} label="Title" class=" min-h-[30px] w-full border border-base-300 rounded-md px-3 py-2 text-sm
+                <div class="mt-1 flex items-center justify-between">
+                  <div class="flex gap-1">
+                    <button phx-click="select-story" phx-value-story-id={story.id}
+                            class="btn btn-xs btn-outline">
+                      Select
+                    </button>
+                    <button phx-click="remove-story" phx-value-story-id={story.id}
+                            class="btn btn-xs btn-ghost text-error">
+                      Remove
+                    </button>
+                  </div>
+
+                  <%= if story[:decisive_vote] do %>
+                    <span class="badge badge-ghost badge-xs">
+                      Final: {story.decisive_vote}
+                    </span>
+                  <% end %>
+                </div>
+              </div>
+            <% end %>
+          <% end %>
+        </div>
+
+        <!-- New story form  -->
+        <div class="px-4 py-3 border-t border-base-200 bg-base-200 shrink-0">
+          <p class="text-xs uppercase tracking-wide text-base-content/60 mb-2">
+            New story
+          </p>
+
+          <.form
+            for={@new_story_form}
+            phx-change="validate-story-form"
+            phx-submit="add-story"
+            class="flex flex-col gap-2"
+          >
+            <.input field={@new_story_form[:title]} label="Title" class="min-h-[30px] w-full border border-base-300 rounded-md px-3 py-2 text-sm
                  focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent
                  resize-none bg-base-100" />
 
-        <.input
-          type="textarea"
-          field={@new_story_form[:description]}
-          label="Description"
-          class="min-h-[80px] w-full border border-base-300 rounded-md px-3 py-2 text-sm
+            <.input
+              type="textarea"
+              field={@new_story_form[:description]}
+              label="Description"
+              class="min-h-[80px] w-full border border-base-300 rounded-md px-3 py-2 text-sm
                  focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent
                  resize-none bg-base-100"
-        />
-
-        <button class="btn btn-primary btn-sm self-end">Add</button>
-      </.form>
-    </div>
-  </aside>
-</div>
-
-<.modal
-  show={@modal_ask_name}
-  close_event={@close_modal_ask_name}
-  cancelable={false}
-  title="What's your name?"
->
-  <:body>
-    <.form
-      for={@modal_ask_name_form}
-      id="user_form"
-      phx-change="validate_name"
-      phx-submit="submit_name"
-      class="space-y-4"
-      :let={f}
-    >
-      <.input
-        label="Name"
-        type="text"
-        field={f[:name]}
-        required
-      />
-
-      <div class="grid grid-cols-5 gap-3">
-        <label class="col-span-5 text-sm font-medium mb-2">
-          Choose your profile icon:
-        </label>
-
-        <%= for icon_name <- User.icon_profile_options do %>
-          <label class="cursor-pointer">
-            <input
-              type="radio"
-              name={f[:icon].name}
-              value={icon_name}
-              class="hidden peer"
-              checked={f[:icon].value == icon_name}
             />
-            <div
-              class="w-12 h-12 rounded-full flex items-center justify-center border-2
+
+            <button class="btn btn-primary btn-sm self-end">Add</button>
+          </.form>
+        </div>
+      </aside>
+    </div>
+
+    <.modal
+      show={@modal_ask_name}
+      close_event={@close_modal_ask_name}
+      cancelable={false}
+      title="What's your name?"
+    >
+      <:body>
+        <.form
+          for={@modal_ask_name_form}
+          id="user_form"
+          phx-change="validate_name"
+          phx-submit="submit_name"
+          class="space-y-4"
+          :let={f}
+        >
+          <.input
+            label="Name"
+            type="text"
+            field={f[:name]}
+            required
+          />
+
+          <div class="grid grid-cols-5 gap-3">
+            <label class="col-span-5 text-sm font-medium mb-2">
+              Choose your profile icon:
+            </label>
+
+            <%= for icon_name <- User.icon_profile_options do %>
+              <label class="cursor-pointer">
+                <input
+                  type="radio"
+                  name={f[:icon].name}
+                  value={icon_name}
+                  class="hidden peer"
+                  checked={f[:icon].value == icon_name}
+                />
+                <div
+                  class="w-12 h-12 rounded-full flex items-center justify-center border-2
                     peer-checked:border-primary peer-checked:ring-2 peer-checked:ring-primary
                     transition-all"
-              title={icon_name}
-            >
-              <img src={format_icon_url(icon_name)} alt={icon_name} class="w-8 h-8" />
-            </div>
-          </label>
-        <% end %>
-      </div>
-    </.form>
+                  title={icon_name}
+                >
+                  <img src={format_icon_url(icon_name)} alt={icon_name} class="w-8 h-8" />
+                </div>
+              </label>
+            <% end %>
+          </div>
+        </.form>
+      </:body>
 
-  </:body>
+      <:footer>
+        <button
+          type="submit"
+          form="user_form"
+          class="btn btn-primary"
+        >
+          Continue
+        </button>
+      </:footer>
+    </.modal>
 
-  <:footer>
-    <button
-      type="submit"
-      form="user_form"
-      class="btn btn-primary"
+    <.modal
+      show={@modal_confirm_reveal_votes}
+      close_event={@close_confirm_reveal_votes}
+      cancelable={true}
+      title="Confirm Reveal Votes"
     >
-      Continue
-    </button>
-  </:footer>
-</.modal>
+      <:body>
+        <p>The following users have not voted yet:</p>
 
+        <ul class="list-disc list-inside mb-4">
+          <%= for user_name <- @pending_reveal_user do %>
+            <li>{user_name || "Unnamed User"}</li>
+          <% end %>
+        </ul>
 
-<.modal
-  show={@modal_confirm_reveal_votes}
-  close_event={@close_confirm_reveal_votes}
-  title="Confirm Reveal Votes"
->
+        <p>Are you sure you want to reveal the votes?</p>
+      </:body>
 
-  <:body>
-    <p>The following users have not voted yet:</p>
+      <:footer>
+        <button
+          phx-click="reveal-votes"
+          phx-value-force="true"
+          class="btn btn-warning"
+        >
+          Yes, Reveal Votes
+        </button>
 
-    <ul class="list-disc list-inside mb-4">
-      <%= for user_name <- @pending_reveal_user do %>
-        <li>{user_name || "Unnamed User"}</li>
-      <% end %>
-    </ul>
+        <button
+          phx-click={@close_confirm_reveal_votes}
+          class="btn btn-ghost"
+        >
+          Cancel
+        </button>
+      </:footer>
+    </.modal>
 
-    <p>Are you sure you want to reveal the votes?</p>
-  </:body>
+    <.live_component
+      module={ElixirPlanningPokerWeb.Components.RoomConfigModal}
+      data={@form_room_config}
+      id="room-config"
+      show={@show_room_config_modal}
+      close_event="close_room_config"
+      submit_event="submit_room_config"
+    />
 
-  <:footer>
-    <button
-      phx-click="reveal-votes"
-      phx-value-force="true"
-      class="btn btn-warning"
-    >
-      Yes, Reveal Votes
-    </button>
-
-    <button
-      phx-click={@close_confirm_reveal_votes}
-      class="btn btn-ghost"
-    >
-      Cancel
-    </button>
-  </:footer>
-</.modal>
-
-
-<.live_component
-  module={ElixirPlanningPokerWeb.Components.RoomConfigModal}
-  data={@form_room_config}
-  id="room-config"
-  show={@show_room_config_modal}
-  close_event="close_room_config"
-  submit_event="submit_room_config"
-/>
-
-<ElixirPlanningPokerWeb.Layouts.flash_group flash={@flash} />
-</div>
+    <ElixirPlanningPokerWeb.Layouts.flash_group flash={@flash} />
+  </div>
 </div>

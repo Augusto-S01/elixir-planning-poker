@@ -20,6 +20,7 @@ defmodule ElixirPlanningPokerWeb.HomeLive do
      |> assign(:close_room_config, @close_room_config)
      |> assign(:validate_room_config, @validate_room_config)
      |> assign(:submit_room_config, @submit_room_config)
+     |> assign_join_room_form()
      |> assign(:form, to_form(User.changeset(user)))}
 
   end
@@ -40,6 +41,20 @@ defmodule ElixirPlanningPokerWeb.HomeLive do
 
   def handle_event(@close_room_config, _params, socket) do
     {:noreply, assign(socket, :show_room_config_modal, false)}
+  end
+
+  def handle_event("join_room", %{"join_room" => %{"room_code" => room_code}}, socket) do
+    case RoomManager.exists?(room_code) do
+      true ->
+        {:noreply,
+         socket
+         |> push_navigate(to: ~p"/room/#{room_code}")}
+      false ->
+        {:noreply,
+         socket
+         |> put_flash(:error, "Room not found")
+         |> assign_join_room_form()}
+    end
   end
 
   def handle_info({@submit_room_config, params}, socket) do
@@ -70,4 +85,10 @@ defmodule ElixirPlanningPokerWeb.HomeLive do
   defp generate_room_code do
     :crypto.strong_rand_bytes(3) |> Base.url_encode64() |> binary_part(0, 4)
   end
+
+  defp assign_join_room_form(socket) do
+    cs = ElixirPlanningPoker.JoinRoom.changeset(%ElixirPlanningPoker.JoinRoom{})
+    assign(socket, :join_room_form, to_form(cs))
+  end
+
 end

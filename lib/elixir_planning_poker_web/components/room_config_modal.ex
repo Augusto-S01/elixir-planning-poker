@@ -56,6 +56,7 @@ defmodule ElixirPlanningPokerWeb.Components.RoomConfigModal do
     <.modal
       show={@show}
       title="Room Configuration"
+      cancelable={true}
       close_event={@close_event}
     >
 

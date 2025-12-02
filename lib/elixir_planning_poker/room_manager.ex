@@ -13,6 +13,13 @@ defmodule ElixirPlanningPoker.RoomManager do
     end
   end
 
+  def exists?(room_code) do
+    case Registry.lookup(ElixirPlanningPoker.RoomRegistry, room_code) do
+      [{_pid, _}] -> true
+      [] -> false
+    end
+  end
+
   def get_state(room_code) do
     case Registry.lookup(ElixirPlanningPoker.RoomRegistry, room_code) do
       [{_pid, _}] -> {:ok, ElixirPlanningPoker.Room.get_state(room_code)}

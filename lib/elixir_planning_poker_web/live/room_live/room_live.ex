@@ -47,26 +47,25 @@ defmodule ElixirPlanningPokerWeb.RoomLive do
     end
   end
 
-  defp assign_forms(socket,state) do
+  defp assign_forms(socket, state) do
     socket
     |> assign_form_ask_name(state)
     |> assign_room_config_form(state)
     |> assign_new_story_form()
   end
 
-defp assign_form_ask_name(socket, state) do
-  user =
-    case User.find_user(state.users, socket.assigns.user_token) do
-      {:ok, user} -> user
-      {:error, :not_found} -> User.new(socket.assigns.user_token)
-    end
+  defp assign_form_ask_name(socket, state) do
+    user =
+      case User.find_user(state.users, socket.assigns.user_token) do
+        {:ok, user} -> user
+        {:error, :not_found} -> User.new(socket.assigns.user_token)
+      end
 
-  changeset = User.changeset(user, %{})
+    changeset = User.changeset(user, %{})
 
-  socket
-  |> assign(:modal_ask_name_form, to_form(changeset, as: :user))
-end
-
+    socket
+    |> assign(:modal_ask_name_form, to_form(changeset, as: :user))
+  end
 
   defp assign_new_story_form(socket) do
     changeset = NewStory.changeset(%NewStory{}, %{})
@@ -78,10 +77,10 @@ end
   defp assign_room_config_form(socket, state) do
     socket
     |> assign(:form_room_config, %{
-          name: state.name,
-          deck_type: state.deck_type,
-          custom_deck: state.custom_deck || ""
-        } )
+      name: state.name,
+      deck_type: state.deck_type,
+      custom_deck: state.custom_deck || ""
+    })
   end
 
   defp assign_base_assigns(socket, state, room_code, user_token) do
@@ -123,9 +122,6 @@ end
     end
   end
 
-  # --- event handlers ---
-
-
   # --- modal event handlers ---
   @impl true
   def handle_event(@close_modal_ask_name, _params, socket) do
@@ -145,13 +141,13 @@ end
     form = to_form(changeset, as: :room)
 
     {:noreply,
-    socket
-    |> assign(:form_room_config, form)
-    |> assign(:room_config_data, updated_data)}
+     socket
+     |> assign(:form_room_config, form)
+     |> assign(:room_config_data, updated_data)}
   end
 
   @impl true
-  def handle_event(@submit_room_config, params,socket) do
+  def handle_event(@submit_room_config, params, socket) do
     IO.inspect(params, label: "Room config params")
     {:noreply, socket}
   end
@@ -168,64 +164,64 @@ end
   end
 
   @impl true
-  def handle_event("open-room-config",__params, socket) do
+  def handle_event("open-room-config", __params, socket) do
     IO.inspect(socket, label: "Opening room config modal")
     IO.inspect(socket.assigns.form_room_config, label: "Form data")
     {:noreply, assign(socket, :show_room_config_modal, true)}
   end
 
   def handle_event("submit_name", %{"user" => params}, socket) do
-  room_code  = socket.assigns.room_code
-  user_token = socket.assigns.user_token
+    room_code = socket.assigns.room_code
+    user_token = socket.assigns.user_token
 
-  user_lookup = User.find_user(socket.assigns.room.users, user_token)
+    user_lookup = User.find_user(socket.assigns.room.users, user_token)
 
-  base_user =
-    case user_lookup do
-      {:ok, user} ->
-        user
+    base_user =
+      case user_lookup do
+        {:ok, user} ->
+          user
 
-      {:error, :not_found} ->
-        User.new(user_token)
+        {:error, :not_found} ->
+          User.new(user_token)
+      end
+
+    changeset = User.changeset(base_user, params)
+
+    if changeset.valid? do
+      IO.inspect("Changeset válido, procedendo...", label: "Submit Name")
+      IO.inspect(changeset, label: "Changeset")
+      %User{name: name, icon: icon} = Ecto.Changeset.apply_changes(changeset)
+      IO.inspect(name, label: "User name to set")
+      IO.inspect(icon, label: "User icon to set")
+
+      case user_lookup do
+        {:ok, _existing_user} ->
+          RoomManager.update_user(
+            room_code,
+            user_token,
+            %{name: name, icon: icon}
+          )
+
+        {:error, :not_found} ->
+          new_user =
+            user_token
+            |> User.new(name)
+            |> Map.put(:icon, icon)
+
+          RoomManager.add_user(room_code, new_user)
+      end
+
+      socket =
+        socket
+        |> assign(:modal_ask_name, false)
+        |> assign(:modal_ask_name_form, to_form(changeset, as: :user))
+
+      {:noreply, socket}
+    else
+      IO.inspect("Changeset inválido, mostrando erros...", label: "Submit Name")
+      {:noreply, assign(socket, :modal_ask_name_form, to_form(changeset, as: :user))}
     end
-
-  changeset = User.changeset(base_user, params)
-
-  if changeset.valid? do
-    IO.inspect("Changeset válido, procedendo...", label: "Submit Name")
-    IO.inspect(changeset, label: "Changeset")
-    %User{name: name, icon: icon} = Ecto.Changeset.apply_changes(changeset)
-    IO.inspect(name, label: "User name to set")
-    IO.inspect(icon, label: "User icon to set")
-    case user_lookup do
-      {:ok, _existing_user} ->
-        RoomManager.update_user(
-          room_code,
-          user_token,
-          %{name: name, icon: icon}
-        )
-
-      {:error, :not_found} ->
-        new_user =
-          user_token
-          |> User.new(name)
-          |> Map.put(:icon, icon)
-
-        RoomManager.add_user(room_code, new_user)
-    end
-    socket =
-      socket
-      |> assign(:modal_ask_name, false)
-      |> assign(:modal_ask_name_form, to_form(changeset, as: :user))
-    {:noreply, socket}
-  else
-    IO.inspect("Changeset inválido, mostrando erros...", label: "Submit Name")
-    {:noreply, assign(socket, :modal_ask_name_form, to_form(changeset, as: :user))}
   end
-end
-
-
-
 
   def handle_event("open-profile-modal", _params, socket) do
     {:noreply, assign(socket, :modal_ask_name, true)}
@@ -246,12 +242,14 @@ end
           socket.assigns.user_token,
           card
         )
+
         if card == socket.assigns.selected_card do
           socket = assign(socket, :selected_card, nil)
           {:noreply, socket}
         else
           {:noreply, assign(socket, :selected_card, card)}
         end
+
       _ ->
         socket = put_flash(socket, :error, "Cannot select card in the current state.")
         {:noreply, socket}
@@ -263,10 +261,11 @@ end
       socket.assigns.room_code,
       socket.assigns.user_token,
       not Enum.find(
-        socket.assigns.room.users,
-        fn u -> u.user == socket.assigns.user_token end
-        ).observer?
-      )
+            socket.assigns.room.users,
+            fn u -> u.user == socket.assigns.user_token end
+          ).observer?
+    )
+
     {:noreply, socket}
   end
 
@@ -277,17 +276,19 @@ end
       |> Map.put(:action, :validate)
 
     {:noreply,
-    socket
-    |> assign(:new_story_form, to_form(changeset, as: :story))}
+     socket
+     |> assign(:new_story_form, to_form(changeset, as: :story))}
   end
 
   def handle_event("add-story", %{"story" => story_params}, socket) do
     changeset = NewStory.changeset(%NewStory{}, story_params)
+
     if changeset.valid? do
       RoomManager.add_story(socket.assigns.room_code, changeset.changes)
+
       {:noreply,
-      socket
-      |> assign_new_story_form()}
+       socket
+       |> assign_new_story_form()}
     else
       socket
       |> assign(:new_story_form, to_form(changeset, as: :story))
@@ -301,7 +302,7 @@ end
     {:noreply, socket}
   end
 
-  def handle_event("remove-story",%{"story-id" => story_id}, socket) do
+  def handle_event("remove-story", %{"story-id" => story_id}, socket) do
     RoomManager.remove_story(socket.assigns.room_code, String.to_integer(story_id))
     {:noreply, socket}
   end
@@ -309,34 +310,36 @@ end
   def handle_event("reveal-votes", %{"force" => force_str}, socket) do
     force? = force_str == "true"
 
-
     case RoomManager.reveal_votes(socket.assigns.room_code, force?) do
       :ok ->
-          socket =
+        socket =
           socket
           |> assign(:modal_confirm_reveal_votes, false)
-          {:noreply, socket}
+
+        {:noreply, socket}
 
       {:need_confirmation, pending_users} ->
         IO.inspect(pending_users, label: "Pending users for confirmation")
+
         socket =
           socket
           |> assign(:modal_confirm_reveal_votes, true)
           |> assign(:pending_reveal_user, pending_users)
 
         {:noreply, socket}
-
     end
   end
 
   def handle_event("copy-room-code", _params, socket) do
     %URI{scheme: scheme, host: host, port: port} = socket.host_uri
+
     base_url =
       case port do
         80 -> "#{scheme}://#{host}"
         443 -> "#{scheme}://#{host}"
         _ -> "#{scheme}://#{host}:#{port}"
       end
+
     room_url = base_url <> "/room/#{socket.assigns.room_code}"
     socket = push_event(socket, "copy_to_clipboard", %{"text" => room_url})
     {:noreply, socket}
@@ -352,6 +355,7 @@ end
       true ->
         RoomManager.highlight_vote(socket.assigns.room_code, vote)
         {:noreply, socket}
+
       false ->
         {:noreply, socket}
     end
@@ -379,6 +383,7 @@ end
   end
 
   # --- info handlers ---
+
   @impl true
   def handle_info({@submit_room_config, new_state}, socket) do
     IO.inspect(new_state, label: "New room state from config modal")
@@ -394,7 +399,8 @@ end
 
   @impl true
   def handle_info({:room_status_changed, new_status}, socket) do
-      socket = assign(socket, :room, %{socket.assigns.room | state: new_status})
+    socket = assign(socket, :room, %{socket.assigns.room | state: new_status})
+
     if new_status == :voting do
       socket = push_event(socket, "deal_cards_animation", %{})
       {:noreply, socket}
@@ -402,13 +408,15 @@ end
       {:noreply, socket}
     end
   end
+
   @impl true
   def handle_info({:user_voted, user_token, voted?}, socket) do
-    socket = if voted? do
-      put_flash(socket, :info, "User #{user_token} voted.")
-    else
-      put_flash(socket, :info, "User #{user_token} removed their vote.")
-    end
+    socket =
+      if voted? do
+        put_flash(socket, :info, "User #{user_token} voted.")
+      else
+        put_flash(socket, :info, "User #{user_token} removed their vote.")
+      end
 
     updated_users =
       Enum.map(socket.assigns.room.users, fn user ->
@@ -436,7 +444,7 @@ end
   end
 
   @impl true
-  def handle_info({:room_revealed,  results}, socket) do
+  def handle_info({:room_revealed, results}, socket) do
     socket
     |> assign(:room, %{socket.assigns.room | state: :revealed, results: results})
     |> put_flash(:info, "Votes have been revealed.")
@@ -487,6 +495,7 @@ end
       |> assign(:room, new_state)
       |> put_flash(:info, "A new voting round has started.")
       |> assign(:selected_card, nil)
+
     {:noreply, socket}
   end
 
@@ -496,6 +505,7 @@ end
   end
 
   # --- private helpers ---
+
   defp current_story(room) do
     case room.current_story do
       nil -> nil
@@ -525,22 +535,108 @@ end
   end
 
   defp all_stories_have_points?(room) do
-    Enum.all?(room.stories, fn story -> not is_nil(story.story_points) or story.id == room.current_story end)
+    Enum.all?(room.stories, fn story ->
+      not is_nil(story.story_points) or story.id == room.current_story
+    end)
   end
 
   defp get_next_story(room) do
     ordered = Enum.sort_by(room.stories, & &1.id)
     current_id = room.current_story
+
     Enum.find(ordered, fn story -> story.id > current_id and is_nil(story.story_points) end) ||
-    Enum.find(ordered, fn story -> is_nil(story.story_points) and story.id != current_id end)
+      Enum.find(ordered, fn story -> is_nil(story.story_points) and story.id != current_id end)
   end
 
-  def format_icon_url(icon_name) do; "/images/profile_icons/#{icon_name}.png" end
+  def format_icon_url(icon_name), do: "/images/profile_icons/#{icon_name}.png"
+
+  # --- pie chart helpers ---
+
+  defp pie_chart_segments(nil), do: []
+
+  defp pie_chart_segments(vote_frequencies) do
+    filtered =
+      vote_frequencies
+      |> Enum.reject(fn {vote, count} -> is_nil(vote) or count <= 0 end)
+
+    total =
+      filtered
+      |> Enum.map(fn {_v, count} -> count end)
+      |> Enum.sum()
+
+    if total == 0 do
+      []
+    else
+      {_, segments} =
+        Enum.reduce(filtered, {0.0, []}, fn {vote, count}, {offset, acc} ->
+          percent = count / total * 100.0
+          seg = %{
+            vote: vote,
+            dash: "#{percent} #{100.0 - percent}",
+            offset: -offset
+          }
+
+          {offset + percent, [seg | acc]}
+        end)
+
+      Enum.reverse(segments)
+    end
+  end
+
+  defp pie_color(index) do
+    colors = [
+      "#6366F1",
+      "#10B981",
+      "#F59E0B",
+      "#EF4444",
+      "#3B82F6",
+      "#EC4899",
+      "#8B5CF6"
+    ]
+
+    Enum.at(colors, rem(index, length(colors)))
+  end
+
+  defp total_votes(room) do
+    cond do
+      room.results && room.results.story && is_list(room.results.story.votes) ->
+        length(room.results.story.votes)
+
+      room.results && is_map(room.results.vote_frequencies) ->
+        room.results.vote_frequencies
+        |> Enum.reject(fn {vote, count} -> is_nil(vote) or count <= 0 end)
+        |> Enum.map(fn {_v, c} -> c end)
+        |> Enum.sum()
+
+      true ->
+        0
+    end
+  end
+
+  defp votes_for_display(room) do
+    cond do
+      room.results && room.results.story && is_list(room.results.story.votes) ->
+        room.results.story.votes
+
+      true ->
+        room.users
+        |> Enum.filter(&(!is_nil(&1.vote)))
+        |> Enum.map(fn user ->
+          %{user: user.user, name: user.name, vote: user.vote}
+        end)
+    end
+  end
+
+  defp icon_for_user(room, token) do
+    case Enum.find(room.users, &(&1.user == token)) do
+      nil -> "axolotl"
+      user -> user.icon
+    end
+  end
 
   @impl true
   def handle_event(_event, _params, socket) do
-    IO.inspect("warning",label: "Unhandled event")
+    IO.inspect("warning", label: "Unhandled event")
     {:noreply, socket}
   end
-
 end

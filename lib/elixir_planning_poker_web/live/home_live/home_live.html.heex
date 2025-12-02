@@ -31,15 +31,20 @@
 
         </div>
         <% else %>
-        <div class="mt-6">
-            <label for="room_code" class="block text-sm font-medium mb-2">Enter Room Code</label>
-            <input id="room_code" type="text" placeholder="ABC123" class="input input-bordered w-full max-w-xs" />
-            <button class="btn btn-primary mt-4 w-full max-w-xs">Join Room</button>
-            <hr class="my-4" />
-            <div class="text-sm text-center text-base-content">
-              <p>Don't have a room code? Ask your organizer for it.</p>
-            </div>
-        </div>
+        <.form for={@join_room_form} phx-submit="join_room" class="mt-6">
+          <div class="mt-6">
+            <.input 
+              field={@join_room_form[:room_code]}
+              placeholder="ABC123"
+              label="Enter Room Code"
+            />
+              <button class="btn btn-primary mt-4 w-full max-w-xs ">Join Room</button>
+              <hr class="my-4" />
+              <div class="text-sm text-center text-base-content">
+                <p>Don't have a room code? Ask your organizer for it.</p>
+              </div>
+          </div>
+        </.form>
         <% end %>
       </div>
 </main>
