@@ -144,4 +144,12 @@ defmodule ElixirPlanningPoker.RoomManager do
     end
   end
 
+  def pass_leadership(room_code, current_leader_token, new_leader_token) do
+    case Registry.lookup(ElixirPlanningPoker.RoomRegistry, room_code) do
+      [{_pid, _}] ->
+        ElixirPlanningPoker.Room.pass_leadership(room_code, current_leader_token, new_leader_token)
+
+      [] -> {:error, :room_not_found}
+    end
+  end
 end

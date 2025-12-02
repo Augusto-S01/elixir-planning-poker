@@ -83,6 +83,10 @@ defmodule ElixirPlanningPoker.Room do
     GenServer.cast(via(room_code), :confirm_vote_and_continue_without_story)
   end
 
+  def pass_leadership(room_code, current_leader_token, new_leader_token) do
+    GenServer.cast(via(room_code), {:pass_leadership, current_leader_token, new_leader_token})
+  end
+
   # Server Callbacks
   @impl true
   def init(opts) do
@@ -319,6 +323,29 @@ defmodule ElixirPlanningPoker.Room do
     case temp do
       nil -> "?"
       v -> v
+    end
+  end
+
+  @impl true
+  def handle_cast({:pass_leadership, current_leader_token, new_leader_token}, state) do
+    if User.is_host?(state.users, current_leader_token) do
+      updated_users =
+        Enum.map(state.users, fn user ->
+          cond do
+            user.user == current_leader_token ->
+              %{user | role: :participant}
+            user.user == new_leader_token ->
+              %{user | role: :host}
+            true ->
+              user
+          end
+        end)
+
+      new_state = %{state | users: updated_users}
+      notify_users_updated(new_state)
+      {:noreply, new_state}
+    else
+      {:noreply, state}
     end
   end
 
