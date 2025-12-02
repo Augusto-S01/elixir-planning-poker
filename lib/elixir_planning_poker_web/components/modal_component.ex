@@ -12,11 +12,22 @@ defmodule ElixirPlanningPokerWeb.ModalComponent do
   def modal(assigns) do
     ~H"""
     <div
-      :if={@show}
-      class="modal modal-open bg-black/50 backdrop-blur-sm"
+      class={[
+        "modal fixed inset-0 flex items-center justify-center transition-all duration-200",
+        # quando aberto
+        @show && "modal-open bg-black/50 backdrop-blur-sm opacity-100 pointer-events-auto",
+        # quando fechado
+        !@show && "bg-transparent backdrop-blur-0 opacity-0 pointer-events-none"
+      ]}
     >
-      <div class="modal-box max-w-2xl bg-base-100 text-base-content shadow-xl border border-base-300 relative">
-
+      <div
+        class={[
+          "modal-box max-w-2xl bg-base-100 text-base-content shadow-xl border border-base-300 relative",
+          "transform transition-all duration-200",
+          @show && "animate-modal-in",
+          !@show && "animate-modal-out"
+        ]}
+      >
         <%= if @title do %>
           <h3 class="font-bold text-lg mb-4 text-primary">{@title}</h3>
         <% end %>
@@ -30,7 +41,6 @@ defmodule ElixirPlanningPokerWeb.ModalComponent do
         <div :if={@footer != []} class="modal-action">
           <%= render_slot(@footer) %>
         </div>
-
       </div>
 
       <button

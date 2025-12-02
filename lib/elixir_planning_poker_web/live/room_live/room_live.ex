@@ -99,6 +99,7 @@ end
     |> assign(:modal_confirm_reveal_votes, false)
     |> assign(:pending_reveal_user, [])
     |> assign(:show_room_config_modal, false)
+    |> assign(:selected_card, nil)
     |> assign(:new_user, false)
   end
 
@@ -238,7 +239,6 @@ end
   end
 
   def handle_event("select-card", %{"card" => card}, socket) do
-    IO.inspect(card, label: "Selected card")
     case socket.assigns.room.state do
       :voting ->
         RoomManager.select_card(
@@ -246,7 +246,12 @@ end
           socket.assigns.user_token,
           card
         )
-        {:noreply, socket}
+        if card == socket.assigns.selected_card do
+          socket = assign(socket, :selected_card, nil)
+          {:noreply, socket}
+        else
+          {:noreply, assign(socket, :selected_card, card)}
+        end
       _ ->
         socket = put_flash(socket, :error, "Cannot select card in the current state.")
         {:noreply, socket}
@@ -378,9 +383,16 @@ end
 
   @impl true
   def handle_info({:room_status_changed, new_status}, socket) do
-    {:noreply, assign(socket, :room, %{socket.assigns.room | state: new_status})}
+      socket = assign(socket, :room, %{socket.assigns.room | state: new_status})
+      IO.inspect(new_status, label: "New room status")
+  # Detectou a entrada no modo voting
+    if new_status == :voting do
+      socket = push_event(socket, "deal_cards_animation", %{})
+      {:noreply, socket}
+    else
+      {:noreply, socket}
+    end
   end
-
   @impl true
   def handle_info({:user_voted, user_token, voted?}, socket) do
     socket = if voted? do
@@ -465,6 +477,7 @@ end
       socket
       |> assign(:room, new_state)
       |> put_flash(:info, "A new voting round has started.")
+      |> assign(:selected_card, nil)
     {:noreply, socket}
   end
 

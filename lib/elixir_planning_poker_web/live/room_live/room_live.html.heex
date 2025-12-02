@@ -314,6 +314,7 @@
             <p class="text-xs uppercase tracking-wide text-base-content/60">
               Your cards
             </p>
+            <div phx-hook="DealCards" id="player-cards-container" >
             <div class="flex flex-wrap gap-2">
               <%= for card <- @room.cards do %>
                 <button
@@ -321,15 +322,19 @@
                   phx-click="select-card"
                   phx-value-card={card}
                   class={[
-                    "btn btn-sm rounded-md min-w-[3rem] font-mono",
+                    "player-card",   ## <- adiciona essa classe
+                    "btn btn-sm rounded-md min-w-[3rem] font-mono transition-all",
                     current_user.vote == card && "btn-primary",
-                    current_user.vote != card && "btn-ghost border border-base-300"
+                    current_user.vote != card && "btn-ghost border border-base-300",
+                    @selected_card == card && "scale-110 shadow-lg ring-2 ring-primary",
                   ]}
                 >
                   {card}
                 </button>
               <% end %>
             </div>
+          </div>
+
           </div>
         <% end %>
       <% end %>

@@ -24,6 +24,7 @@ import {Socket} from "phoenix"
 import {LiveSocket} from "phoenix_live_view"
 import {hooks as colocatedHooks} from "phoenix-colocated/elixir_planning_poker"
 import topbar from "../vendor/topbar"
+import { DealCards } from "./hooks/deal_card";
 
 let Hooks = {}
 Hooks.CopyToClipboard = {
@@ -34,8 +35,7 @@ Hooks.CopyToClipboard = {
   }
 }
 
-
-
+Hooks.DealCards = DealCards;
 const csrfToken = document.querySelector("meta[name='csrf-token']").getAttribute("content")
 const liveSocket = new LiveSocket("/live", Socket, {
   longPollFallbackMs: 2500,
