@@ -12,10 +12,10 @@ export const DealCards = {
     cards.forEach((card, i) => {
       card.classList.add("card-deal-animation");
 
-      // pequeno delay entre as cartas (efeito "1 carta por vez")
+      
       card.style.animationDelay = `${i * 120}ms`;
       
-      // Remove a animação quando terminar
+     
       card.addEventListener("animationend", () => {
         card.classList.remove("card-deal-animation");
         card.style.animationDelay = "";

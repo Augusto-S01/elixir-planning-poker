@@ -389,8 +389,6 @@ end
   @impl true
   def handle_info({:room_status_changed, new_status}, socket) do
       socket = assign(socket, :room, %{socket.assigns.room | state: new_status})
-      IO.inspect(new_status, label: "New room status")
-  # Detectou a entrada no modo voting
     if new_status == :voting do
       socket = push_event(socket, "deal_cards_animation", %{})
       {:noreply, socket}
