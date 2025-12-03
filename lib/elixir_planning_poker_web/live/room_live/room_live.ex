@@ -147,14 +147,12 @@ defmodule ElixirPlanningPokerWeb.RoomLive do
   end
 
   @impl true
-  def handle_event(@submit_room_config, params, socket) do
-    IO.inspect(params, label: "Room config params")
+  def handle_event(@submit_room_config, _params, socket) do
     {:noreply, socket}
   end
 
   @impl true
   def handle_event(@close_room_config, _params, socket) do
-    IO.inspect(socket, label: "Opening room config modal")
     {:noreply, assign(socket, :show_room_config_modal, false)}
   end
 
@@ -165,8 +163,6 @@ defmodule ElixirPlanningPokerWeb.RoomLive do
 
   @impl true
   def handle_event("open-room-config", __params, socket) do
-    IO.inspect(socket, label: "Opening room config modal")
-    IO.inspect(socket.assigns.form_room_config, label: "Form data")
     {:noreply, assign(socket, :show_room_config_modal, true)}
   end
 
@@ -188,11 +184,7 @@ defmodule ElixirPlanningPokerWeb.RoomLive do
     changeset = User.changeset(base_user, params)
 
     if changeset.valid? do
-      IO.inspect("Changeset válido, procedendo...", label: "Submit Name")
-      IO.inspect(changeset, label: "Changeset")
       %User{name: name, icon: icon} = Ecto.Changeset.apply_changes(changeset)
-      IO.inspect(name, label: "User name to set")
-      IO.inspect(icon, label: "User icon to set")
 
       case user_lookup do
         {:ok, _existing_user} ->
@@ -218,7 +210,6 @@ defmodule ElixirPlanningPokerWeb.RoomLive do
 
       {:noreply, socket}
     else
-      IO.inspect("Changeset inválido, mostrando erros...", label: "Submit Name")
       {:noreply, assign(socket, :modal_ask_name_form, to_form(changeset, as: :user))}
     end
   end
@@ -251,7 +242,6 @@ defmodule ElixirPlanningPokerWeb.RoomLive do
         end
 
       _ ->
-        socket = put_flash(socket, :error, "Cannot select card in the current state.")
         {:noreply, socket}
     end
   end
@@ -292,7 +282,6 @@ defmodule ElixirPlanningPokerWeb.RoomLive do
     else
       socket
       |> assign(:new_story_form, to_form(changeset, as: :story))
-      |> put_flash(:error, "Invalid story title.")
       |> then(&{:noreply, &1})
     end
   end
@@ -319,8 +308,6 @@ defmodule ElixirPlanningPokerWeb.RoomLive do
         {:noreply, socket}
 
       {:need_confirmation, pending_users} ->
-        IO.inspect(pending_users, label: "Pending users for confirmation")
-
         socket =
           socket
           |> assign(:modal_confirm_reveal_votes, true)
@@ -382,11 +369,14 @@ defmodule ElixirPlanningPokerWeb.RoomLive do
     {:noreply, socket}
   end
 
+  def handle_event("validate_name",_params,socket) do
+    {:noreply, socket}
+  end
+
   # --- info handlers ---
 
   @impl true
   def handle_info({@submit_room_config, new_state}, socket) do
-    IO.inspect(new_state, label: "New room state from config modal")
     RoomManager.change_room_config(socket.assigns.room_code, new_state)
     socket = assign(socket, :show_room_config_modal, false)
     {:noreply, socket}
@@ -411,13 +401,6 @@ defmodule ElixirPlanningPokerWeb.RoomLive do
 
   @impl true
   def handle_info({:user_voted, user_token, voted?}, socket) do
-    socket =
-      if voted? do
-        put_flash(socket, :info, "User #{user_token} voted.")
-      else
-        put_flash(socket, :info, "User #{user_token} removed their vote.")
-      end
-
     updated_users =
       Enum.map(socket.assigns.room.users, fn user ->
         if user.user == user_token, do: %{user | voted?: voted?}, else: user
@@ -430,7 +413,6 @@ defmodule ElixirPlanningPokerWeb.RoomLive do
   def handle_info({:room_stories_updated, stories}, socket) do
     socket
     |> assign(:room, %{socket.assigns.room | stories: stories})
-    |> put_flash(:info, "Room stories updated.")
     |> then(&{:noreply, &1})
   end
 
@@ -439,7 +421,6 @@ defmodule ElixirPlanningPokerWeb.RoomLive do
     socket
     |> assign(:room, Map.merge(socket.assigns.room, new_config))
     |> assign_room_config_form(socket.assigns.room)
-    |> put_flash(:info, "Room configuration updated.")
     |> then(&{:noreply, &1})
   end
 
@@ -447,20 +428,13 @@ defmodule ElixirPlanningPokerWeb.RoomLive do
   def handle_info({:room_revealed, results}, socket) do
     socket
     |> assign(:room, %{socket.assigns.room | state: :revealed, results: results})
-    |> put_flash(:info, "Votes have been revealed.")
     |> then(&{:noreply, &1})
   end
 
   @impl true
   def handle_info({:room_story_selected, story_id}, socket) do
-    story_name =
-      socket.assigns.room.stories
-      |> Enum.find(fn story -> story.id == story_id end)
-      |> Map.get(:title, "Unknown Story")
-
     socket
     |> assign(:room, %{socket.assigns.room | current_story: story_id})
-    |> put_flash(:info, "Story #{story_name} has been selected.")
     |> then(&{:noreply, &1})
   end
 
@@ -493,15 +467,21 @@ defmodule ElixirPlanningPokerWeb.RoomLive do
     socket =
       socket
       |> assign(:room, new_state)
-      |> put_flash(:info, "A new voting round has started.")
       |> assign(:selected_card, nil)
 
     {:noreply, socket}
   end
 
   def handle_info({:room_poke, from, to}, socket) do
-    IO.inspect({from, to}, label: "Received poke event")
     {:noreply, push_event(socket, "poke_animation", %{from: from, to: to})}
+  end
+
+  def handle_info({:room_deleting}, socket) do
+    socket =
+      socket
+      |> put_flash(:warning, "The room is being deleted.")
+      |> push_navigate(to: "/")
+    {:noreply, socket}
   end
 
   # --- private helpers ---
@@ -534,12 +514,6 @@ defmodule ElixirPlanningPokerWeb.RoomLive do
     "#{Float.round(percent, 1)}% agreement"
   end
 
-  defp all_stories_have_points?(room) do
-    Enum.all?(room.stories, fn story ->
-      not is_nil(story.story_points) or story.id == room.current_story
-    end)
-  end
-
   defp get_next_story(room) do
     ordered = Enum.sort_by(room.stories, & &1.id)
     current_id = room.current_story
@@ -549,8 +523,6 @@ defmodule ElixirPlanningPokerWeb.RoomLive do
   end
 
   def format_icon_url(icon_name), do: "/images/profile_icons/#{icon_name}.png"
-
-  # --- pie chart helpers ---
 
   defp pie_chart_segments(nil), do: []
 
@@ -634,9 +606,4 @@ defmodule ElixirPlanningPokerWeb.RoomLive do
     end
   end
 
-  @impl true
-  def handle_event(_event, _params, socket) do
-    IO.inspect("warning", label: "Unhandled event")
-    {:noreply, socket}
-  end
 end

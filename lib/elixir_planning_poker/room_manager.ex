@@ -88,7 +88,6 @@ defmodule ElixirPlanningPoker.RoomManager do
   end
 
   def select_story(room_code, story_id) do
-    IO.inspect("select_story called", label: "Select Story API")
     case Registry.lookup(ElixirPlanningPoker.RoomRegistry, room_code) do
       [{_pid, _}] ->
         ElixirPlanningPoker.Room.select_story(room_code, story_id)
