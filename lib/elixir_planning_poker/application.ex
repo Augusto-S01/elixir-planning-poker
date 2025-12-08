@@ -6,7 +6,7 @@ defmodule ElixirPlanningPoker.Application do
   def start(_type, _args) do
     children = [
       ElixirPlanningPokerWeb.Telemetry,
-      ElixirPlanningPoker.Repo,
+      # ElixirPlanningPoker.Repo,
 
       {DNSCluster, query: Application.get_env(:elixir_planning_poker, :dns_cluster_query) || :ignore},
       {Registry, keys: :unique, name: ElixirPlanningPoker.RoomRegistry},

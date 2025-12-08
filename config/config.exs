@@ -8,7 +8,7 @@
 import Config
 
 config :elixir_planning_poker,
-  ecto_repos: [ElixirPlanningPoker.Repo],
+  ecto_repos: [],
   generators: [timestamp_type: :utc_datetime]
 
 # Configures the endpoint
