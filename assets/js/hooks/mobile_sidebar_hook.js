@@ -1,9 +1,6 @@
 export const MobileSidebar = {
   mounted() {
     console.log("[MobileSidebar] mounted");
-    console.log("[MobileSidebar] initial dataset:", this.el);
-
-    this.el.style.display ="none"; // evita flash visual
 
     this.pointerMoveFn = this.onPointerMove.bind(this);
     this.pointerUpFn = this.onPointerUp.bind(this);
@@ -14,51 +11,44 @@ export const MobileSidebar = {
 
     this.isDragging = false;
     this.suppressNextClick = false;
-    this.sidebarWidth = this.el.getBoundingClientRect().width;
 
     this.updateOpenState();
-    // this.applySnapFromState();
-    this.firstUpdated();
-    
-
-    // drag para fechar: na própria sidebar (quando aberta)
-    this.el.addEventListener("pointerdown", this.sidebarPointerDownFn);
-
-    // drag para abrir: no puxador
-    this.bindHandle();
-
-    window.addEventListener("resize", this.resizeFn);
+    this.sidebarWidth = this.el.getBoundingClientRect().width;
 
     this.el.style.willChange = "transform";
-    this.el.style.display ="flex"; // mostra só depois de tudo pronto
-    console.log("[MobileSidebar] mounted complete");
-    console.log("[MobileSidebar] final classList:", this.el.classList);
-  },
-  firstUpdated() {
-    console.log("[MobileSidebar] firstUpdated");
-    if (!this.isMobile()) {
-      this.el.style.transition = "";
-      this.el.style.transform = "";
-      return;
-    }
-    this.sidebarWidth = this.el.getBoundingClientRect().width;
-    this.el.style.display ="none";
 
+    this.snap({ animate: false });
+
+    this.el.addEventListener("pointerdown", this.sidebarPointerDownFn);
+    this.bindHandle();
+    window.addEventListener("resize", this.resizeFn);
+
+    console.log("[MobileSidebar] mounted complete");
   },
-    updated() {
+
+  updated() {
     const prev = this.isOpen;
     this.updateOpenState();
 
-    console.log("[MobileSidebar] updated", { prev, now: this.isOpen, dataset: this.el.dataset.mobileOpen });
+    console.log("[MobileSidebar] updated", {
+      prev,
+      now: this.isOpen,
+      dataset: this.el.dataset.mobileOpen
+    });
 
-    if (prev !== this.isOpen) {
-        console.log("[MobileSidebar] state changed, snapping...");
-        this.applySnapFromState();
+    if (this.isMobile()) {
+      this.sidebarWidth = this.el.getBoundingClientRect().width;
+      if (prev !== this.isOpen) {
+        this.snap({ animate: true });
+      }
+    } else {
+      // Desktop: sempre visível, sem transform
+      this.el.style.transition = "";
+      this.el.style.transform = "";
     }
 
     this.bindHandle();
-    },
-
+  },
 
   destroyed() {
     window.removeEventListener("resize", this.resizeFn);
@@ -73,7 +63,6 @@ export const MobileSidebar = {
     }
   },
 
-  // --- helpers de estado ---
 
   isMobile() {
     return window.innerWidth < 768;
@@ -84,26 +73,26 @@ export const MobileSidebar = {
   },
 
   onResize() {
-    this.sidebarWidth = this.el.getBoundingClientRect().width;
-    this.applySnapFromState();
-  },
-
-  applySnapFromState() {
-    // em desktop deixa sem transform (sidebar fixa na direita)
-    console.log("[MobileSidebar] applying snap from state", { isOpen: this.isOpen });
     if (!this.isMobile()) {
       this.el.style.transition = "";
       this.el.style.transform = "";
       return;
     }
 
-
     this.sidebarWidth = this.el.getBoundingClientRect().width;
+    this.snap({ animate: false });
+  },
 
-    // animação suave quando estado muda via click
-    this.el.style.transition = "transform 250ms ease-out";
+  snap({ animate } = { animate: true }) {
+    if (!this.isMobile()) {
+      return;
+    }
 
-    const offset = this.isOpen ? 0 : this.sidebarWidth;
+    this.el.style.transition = animate ? "transform 250ms ease-out" : "none";
+
+    const width = this.sidebarWidth || this.el.getBoundingClientRect().width;
+    const offset = this.isOpen ? 0 : width;
+
     this.el.style.transform = `translateX(${offset}px)`;
   },
 
@@ -125,7 +114,7 @@ export const MobileSidebar = {
     }
   },
 
-  // --- lógica de drag ---
+
 
   startDrag(startX) {
     if (!this.isMobile()) return;
@@ -138,7 +127,6 @@ export const MobileSidebar = {
     this.startOffset = this.startOpen ? 0 : this.sidebarWidth;
     this.currentOffset = this.startOffset;
 
-    // sem animação durante o drag
     this.el.style.transition = "none";
 
     document.addEventListener("pointermove", this.pointerMoveFn);
@@ -176,22 +164,18 @@ export const MobileSidebar = {
       this.suppressNextClick = true;
     }
 
-    // volta a animação
     this.el.style.transition = "transform 200ms ease-out";
 
-    // atualiza visualmente já, pra sensação ficar boa
     const finalOffset = shouldOpen ? 0 : this.sidebarWidth;
     this.el.style.transform = `translateX(${finalOffset}px)`;
 
     if (shouldOpen !== this.startOpen) {
-      // sincroniza estado com LiveView
       this.pushEvent("toggle-mobile-sidebar", {});
     }
   },
 
-  // --- handlers específicos ---
 
-  // drag para abrir: no handle
+
   onHandlePointerDown(ev) {
     console.log("[MobileSidebar] handle pointerdown");
     ev.preventDefault();
@@ -206,17 +190,15 @@ export const MobileSidebar = {
       this.suppressNextClick = false;
       return;
     }
-    // se não teve drag, o click passa e LiveView trata
+
   },
 
-  // drag para fechar: na borda direita da própria sidebar quando aberta
   onSidebarPointerDown(ev) {
     if (!this.isMobile()) return;
     if (!this.isOpen) return;
 
     const xFromRight = window.innerWidth - ev.clientX;
     if (xFromRight > 60) {
-      // não é na borda → deixa rolar scroll/click normal
       return;
     }
 

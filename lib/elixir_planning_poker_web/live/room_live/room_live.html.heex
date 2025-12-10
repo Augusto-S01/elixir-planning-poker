@@ -409,15 +409,17 @@
       </section>
 
       <!-- SIDEBAR / STORIES -->
-      <aside
-        id="mobile-sidebar"
-        phx-hook="MobileSidebar"
-        data-mobile-open={to_string(@mobile_sidebar_open)}
-        class={[
-          "fixed inset-y-0 right-0 z-30 w-72 max-w-full bg-base-100 border-l border-base-300 shadow-xl md:static md:w-80 md:h-full md:shadow-none",
-          "flex flex-col h-full overflow-hidden " 
-        ]}
-      >
+        <aside
+          id="mobile-sidebar"
+          phx-hook="MobileSidebar"
+          data-mobile-open={to_string(@mobile_sidebar_open)}
+          class={[
+            "fixed inset-y-0 right-0 z-30 w-72 max-w-full bg-base-100 border-l border-base-300 shadow-xl md:static md:w-80 md:h-full md:shadow-none",
+            "flex flex-col h-full overflow-hidden"
+          ]}
+        >
+
+
         <!-- TOPO: header + contagem -->
         <div class="px-4 py-3 border-b border-base-200 flex items-center justify-between gap-2 shrink-0">
           <div>
