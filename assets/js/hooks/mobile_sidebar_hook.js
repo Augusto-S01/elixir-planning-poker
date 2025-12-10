@@ -1,7 +1,5 @@
 export const MobileSidebar = {
   mounted() {
-    console.log("[MobileSidebar] mounted");
-
     this.pointerMoveFn = this.onPointerMove.bind(this);
     this.pointerUpFn = this.onPointerUp.bind(this);
     this.sidebarPointerDownFn = this.onSidebarPointerDown.bind(this);
@@ -17,24 +15,26 @@ export const MobileSidebar = {
 
     this.el.style.willChange = "transform";
 
-    this.snap({ animate: false });
+
+    if (this.isMobile()) {
+      this.snap({ animate: false });
+    } else {
+      this.el.style.transition = "";
+      this.el.style.transform = "";
+    }
 
     this.el.addEventListener("pointerdown", this.sidebarPointerDownFn);
+
     this.bindHandle();
+
     window.addEventListener("resize", this.resizeFn);
 
-    console.log("[MobileSidebar] mounted complete");
   },
 
   updated() {
     const prev = this.isOpen;
     this.updateOpenState();
 
-    console.log("[MobileSidebar] updated", {
-      prev,
-      now: this.isOpen,
-      dataset: this.el.dataset.mobileOpen
-    });
 
     if (this.isMobile()) {
       this.sidebarWidth = this.el.getBoundingClientRect().width;
@@ -42,7 +42,6 @@ export const MobileSidebar = {
         this.snap({ animate: true });
       }
     } else {
-      // Desktop: sempre visível, sem transform
       this.el.style.transition = "";
       this.el.style.transform = "";
     }
@@ -84,15 +83,12 @@ export const MobileSidebar = {
   },
 
   snap({ animate } = { animate: true }) {
-    if (!this.isMobile()) {
-      return;
-    }
-
-    this.el.style.transition = animate ? "transform 250ms ease-out" : "none";
+    if (!this.isMobile()) return;
 
     const width = this.sidebarWidth || this.el.getBoundingClientRect().width;
     const offset = this.isOpen ? 0 : width;
 
+    this.el.style.transition = animate ? "transform 250ms ease-out" : "none";
     this.el.style.transform = `translateX(${offset}px)`;
   },
 
@@ -109,12 +105,11 @@ export const MobileSidebar = {
     this.handle = newHandle;
 
     if (this.handle) {
+      this.handle.style.touchAction = "none";
       this.handle.addEventListener("pointerdown", this.handlePointerDownFn);
       this.handle.addEventListener("click", this.handleClickFn, true);
     }
   },
-
-
 
   startDrag(startX) {
     if (!this.isMobile()) return;
@@ -129,8 +124,11 @@ export const MobileSidebar = {
 
     this.el.style.transition = "none";
 
+    this.el.style.transform = `translateX(${this.startOffset}px)`;
+
     document.addEventListener("pointermove", this.pointerMoveFn);
     document.addEventListener("pointerup", this.pointerUpFn);
+
   },
 
   onPointerMove(ev) {
@@ -175,9 +173,22 @@ export const MobileSidebar = {
   },
 
 
+  onSidebarPointerDown(ev) {
+    if (!this.isMobile()) return;
+    if (!this.isOpen) return;
+
+    const rect = this.el.getBoundingClientRect();
+    const xFromRight = rect.right - ev.clientX;
+
+    if (xFromRight > 40) return;
+
+    ev.preventDefault();
+    ev.stopPropagation();
+    this.startDrag(ev.clientX);
+  },
 
   onHandlePointerDown(ev) {
-    console.log("[MobileSidebar] handle pointerdown");
+    if (!this.isMobile()) return;
     ev.preventDefault();
     ev.stopPropagation();
     this.startDrag(ev.clientX);
@@ -190,21 +201,5 @@ export const MobileSidebar = {
       this.suppressNextClick = false;
       return;
     }
-
-  },
-
-  onSidebarPointerDown(ev) {
-    if (!this.isMobile()) return;
-    if (!this.isOpen) return;
-
-    const xFromRight = window.innerWidth - ev.clientX;
-    if (xFromRight > 60) {
-      return;
-    }
-
-    console.log("[MobileSidebar] sidebar edge pointerdown");
-    ev.preventDefault();
-    ev.stopPropagation();
-    this.startDrag(ev.clientX);
   }
 };

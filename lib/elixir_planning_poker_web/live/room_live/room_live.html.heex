@@ -92,12 +92,12 @@
     <div class="flex flex-1 h-full overflow-hidden flex-col md:flex-row relative">
       <!-- Puxador mobile -->
       <%= if not @mobile_sidebar_open do %>
-        <button
-          type="button"
-          id="mobile-sidebar-handle"
-          phx-click="toggle-mobile-sidebar"
-          class="fixed right-0 top-1/2 -translate-y-1/2 z-20 md:hidden bg-base-100 border border-base-300 border-r-0 rounded-l-full px-2 py-3 shadow-lg flex flex-col items-center gap-1"
-        >
+          <button
+            type="button"
+            id="mobile-sidebar-handle"
+            class="fixed right-0 top-1/2 -translate-y-1/2 z-20 md:hidden bg-base-100 border border-base-300 border-r-0 rounded-l-full px-2 py-3 shadow-lg flex flex-col items-center gap-1 touch-none"
+          >
+
           <span class="text-[10px] font-medium tracking-wide rotate-90">
             Stories
           </span>
@@ -108,12 +108,12 @@
       <% end %>
 
       <!-- Backdrop mobile -->
-      <%= if @mobile_sidebar_open do %>
-        <div
-          class="fixed inset-0 bg-black/40 z-20 md:hidden"
-          phx-click="toggle-mobile-sidebar"
-        ></div>
-      <% end %>
+    <div
+      :if={@mobile_sidebar_open}
+      id="mobile-sidebar-overlay"
+      phx-click="toggle-mobile-sidebar"
+      class="fixed inset-0 bg-black/40 z-20 md:hidden"
+    ></div>
 
       <!-- MAIN CONTENT -->
       <section class="flex flex-1 overflow-y-auto md:overflow-hidden">
@@ -409,16 +409,22 @@
       </section>
 
       <!-- SIDEBAR / STORIES -->
-        <aside
-          id="mobile-sidebar"
-          phx-hook="MobileSidebar"
-          data-mobile-open={to_string(@mobile_sidebar_open)}
-          class={[
-            "fixed inset-y-0 right-0 z-30 w-72 max-w-full bg-base-100 border-l border-base-300 shadow-xl md:static md:w-80 md:h-full md:shadow-none",
-            "flex flex-col h-full overflow-hidden"
-          ]}
-        >
-
+      <aside
+        id="mobile-sidebar"
+        phx-hook="MobileSidebar"
+        data-mobile-open={@mobile_sidebar_open}
+        style={if @mobile_sidebar_open do
+          ""
+        else
+          "transform: translateX(100%);"
+        end}
+        class={[
+          "fixed inset-y-0 right-0 z-30 w-72 max-w-full bg-base-100 border-l border-base-300 shadow-xl",
+          "flex flex-col h-full overflow-hidden",
+          "transition-transform duration-200",
+          "md:static md:w-80 md:h-full md:shadow-none"
+        ]}
+      >
 
         <!-- TOPO: header + contagem -->
         <div class="px-4 py-3 border-b border-base-200 flex items-center justify-between gap-2 shrink-0">
