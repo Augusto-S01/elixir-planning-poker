@@ -100,6 +100,7 @@ defmodule ElixirPlanningPokerWeb.RoomLive do
     |> assign(:show_room_config_modal, false)
     |> assign(:selected_card, nil)
     |> assign(:new_user, false)
+    |> assign(:mobile_sidebar_open, false)
   end
 
   defp assign_user_and_modal(socket, user_token) do
@@ -123,6 +124,7 @@ defmodule ElixirPlanningPokerWeb.RoomLive do
   end
 
   # --- modal event handlers ---
+
   @impl true
   def handle_event(@close_modal_ask_name, _params, socket) do
     {:noreply, assign(socket, :modal_ask_name, false)}
@@ -221,7 +223,12 @@ defmodule ElixirPlanningPokerWeb.RoomLive do
   # --- main event handlers ---
 
   def handle_event("alter-status", %{"status" => status}, socket) do
-    RoomManager.alter_room_status(socket.assigns.room_code, socket.assigns.user_token, String.to_atom(status))
+    RoomManager.alter_room_status(
+      socket.assigns.room_code,
+      socket.assigns.user_token,
+      String.to_atom(status)
+    )
+
     {:noreply, socket}
   end
 
@@ -359,7 +366,12 @@ defmodule ElixirPlanningPokerWeb.RoomLive do
   end
 
   def handle_event("pass-leadership", %{"user" => new_leader_token}, socket) do
-    RoomManager.pass_leadership(socket.assigns.room_code, socket.assigns.user_token, new_leader_token)
+    RoomManager.pass_leadership(
+      socket.assigns.room_code,
+      socket.assigns.user_token,
+      new_leader_token
+    )
+
     {:noreply, socket}
   end
 
@@ -369,8 +381,14 @@ defmodule ElixirPlanningPokerWeb.RoomLive do
     {:noreply, socket}
   end
 
-  def handle_event("validate_name",_params,socket) do
+  def handle_event("validate_name", _params, socket) do
     {:noreply, socket}
+  end
+
+  def handle_event("toggle-mobile-sidebar", _params, socket) do
+    IO.inspect("toggling mobile sidebar")
+    IO.inspect(socket.assigns.mobile_sidebar_open, label: "mobile_sidebar_open")
+    {:noreply, assign(socket, :mobile_sidebar_open, !socket.assigns.mobile_sidebar_open)}
   end
 
   # --- info handlers ---
@@ -605,5 +623,4 @@ defmodule ElixirPlanningPokerWeb.RoomLive do
       user -> user.icon
     end
   end
-
 end
