@@ -22,7 +22,7 @@ RUN mix deps.compile
 
 COPY . .
 
-RUN mix assets.deploy
+RUN MIX_ENV=prod mix assets.deploy
 
 RUN MIX_ENV=prod mix compile
 RUN MIX_ENV=prod mix release
