@@ -85,6 +85,9 @@
             </svg>
           </.button>
         <% end %>
+        <div class="ml-2">
+          <Layouts.theme_toggle />
+        </div>
       </div>
     </header>
 
@@ -108,12 +111,12 @@
       <% end %>
 
       <!-- Backdrop mobile -->
-    <div
-      :if={@mobile_sidebar_open}
-      id="mobile-sidebar-overlay"
-      phx-click="toggle-mobile-sidebar"
-      class="fixed inset-0 bg-black/40 z-20 md:hidden"
-    ></div>
+      <div
+        :if={@mobile_sidebar_open}
+        id="mobile-sidebar-overlay"
+        phx-click="toggle-mobile-sidebar"
+        class="fixed inset-0 bg-black/40 z-20 md:hidden"
+      ></div>
 
       <!-- MAIN CONTENT -->
       <section class="flex flex-1 overflow-y-auto md:overflow-hidden">
@@ -216,35 +219,34 @@
                   </div>
                 </div>
 
-              <!-- ALWAYS SHOW INDIVIDUAL VOTES -->
-              <div class="mt-4">
-                <p class="text-xs uppercase tracking-wide text-base-content/60 mb-2">
-                  Individual Votes
-                </p>
+                <!-- ALWAYS SHOW INDIVIDUAL VOTES -->
+                <div class="mt-4">
+                  <p class="text-xs uppercase tracking-wide text-base-content/60 mb-2">
+                    Individual Votes
+                  </p>
 
-                <%= if votes_for_display(@room) == [] do %>
-                  <p class="text-sm text-base-content/70 italic">No votes yet.</p>
-                <% else %>
-                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <%= for %{name: name, vote: vote, user: token} <- votes_for_display(@room) do %>
-                      <div class={[
-                        "flex items-center gap-3 border rounded-lg p-2 transition text-sm",
-                        @room.highlighted_vote == vote && "border-primary bg-primary/10"
-                      ]}>
-                        <img
-                          src={format_icon_url(icon_for_user(@room, token))}
-                          class="w-10 h-10 rounded-full border border-base-300"
-                        />
-                        <div class="flex flex-col">
-                          <span class="font-medium truncate max-w-[140px] sm:max-w-none">{name}</span>
-                          <span class="font-mono text-xs sm:text-sm text-base-content/70">Vote: {vote}</span>
+                  <%= if votes_for_display(@room) == [] do %>
+                    <p class="text-sm text-base-content/70 italic">No votes yet.</p>
+                  <% else %>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <%= for %{name: name, vote: vote, user: token} <- votes_for_display(@room) do %>
+                        <div class={[
+                          "flex items-center gap-3 border rounded-lg p-2 transition text-sm",
+                          @room.highlighted_vote == vote && "border-primary bg-primary/10"
+                        ]}>
+                          <img
+                            src={format_icon_url(icon_for_user(@room, token))}
+                            class="w-10 h-10 rounded-full border border-base-300"
+                          />
+                          <div class="flex flex-col">
+                            <span class="font-medium truncate max-w-[140px] sm:max-w-none">{name}</span>
+                            <span class="font-mono text-xs sm:text-sm text-base-content/70">Vote: {vote}</span>
+                          </div>
                         </div>
-                      </div>
-                    <% end %>
-                  </div>
-                <% end %>
-              </div>
-
+                      <% end %>
+                    </div>
+                  <% end %>
+                </div>
 
                 <!-- ACTION BUTTONS -->
                 <div class="mt-4 flex flex-wrap gap-2 justify-end">
@@ -370,6 +372,17 @@
                     phx-hook="PokeAnimationHook"
                     class="pointer-events-none absolute inset-0 z-20"
                   ></div>
+                </div>
+                <div class="absolute bottom-3 right-4 text-[10px] sm:text-xs text-base-content/70 bg-base-100/90 backdrop-blur rounded-full px-3 py-1 border border-base-200 flex items-center gap-1">
+                  <span class="hidden xs:inline">To see more tools, visit</span>
+                  <a
+                    href="https://augustosouza.dev"
+                    class="link link-primary text-[10px] sm:text-xs"
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    AugustoSouza.dev
+                  </a>
                 </div>
               </div>
             <% end %>
