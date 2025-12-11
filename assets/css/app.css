@@ -164,3 +164,7 @@
   display: block;
 }
 
+#mobile-sidebar,
+#mobile-sidebar-handle {
+  touch-action: pan-y;
+}

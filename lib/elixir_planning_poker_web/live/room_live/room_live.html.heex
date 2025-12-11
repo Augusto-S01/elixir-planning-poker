@@ -1,8 +1,12 @@
 <div class="h-screen overflow-hidden">
   <div class="h-full flex flex-col">
 
-    <header class="border-b border-base-300 bg-base-100 px-6 py-3 flex items-center justify-between gap-4" phx-hook="CopyToClipboard" id="room-header">
-      <div class="flex items-center gap-10">
+    <header
+      class="border-b border-base-300 bg-base-100 px-4 sm:px-6 py-3 flex flex-wrap items-center justify-between gap-3 sm:gap-4"
+      phx-hook="CopyToClipboard"
+      id="room-header"
+    >
+      <div class="flex items-center gap-4 sm:gap-10 flex-wrap">
         <div class="flex flex-col">
           <span class="text-[11px] uppercase tracking-wide text-base-content/60">
             Room
@@ -16,7 +20,7 @@
           <span
             id="copy-room-link-btn"
             phx-click="copy-room-code"
-            class="inline-flex items-center gap-2 px-3 py-1.5 rounded-md font-mono text-sm
+            class="inline-flex items-center gap-2 px-3 py-1.5 rounded-md font-mono text-xs sm:text-sm
                 bg-base-200 hover:bg-base-300 text-base-content
                 cursor-pointer select-none
                 transition-all duration-300 ease-out hover:shadow-md hover:shadow-primary/30
@@ -27,17 +31,17 @@
             <svg xmlns="http://www.w3.org/2000/svg"
               class="w-4 h-4 opacity-70 group-hover:opacity-100 transition-opacity"
               viewBox="0 0 24 24" fill="none" stroke="currentColor">
-              <rect x="9" y="9" width="13" height="13" rx="2" ry="2" ry="2" stroke-width="2"/>
+              <rect x="9" y="9" width="13" height="13" rx="2" ry="2" stroke-width="2"/>
               <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" stroke-width="2"/>
             </svg>
           </span>
         </div>
       </div>
 
-      <div class="flex items-center gap-4">
+      <div class="flex items-center gap-2 sm:gap-4">
         <!-- Host Panel -->
         <%= if User.is_host?(@room.users, @user_token) do %>
-          <div class="flex items-center gap-2">
+          <div class="flex items-center gap-2 flex-wrap justify-end">
             <.button
               phx-click="open-room-config"
               class="btn btn-ghost btn-circle"
@@ -52,7 +56,7 @@
               <.button
                 phx-click="alter-status"
                 phx-value-status="voting"
-                class="btn btn-primary "
+                class="btn btn-primary btn-sm sm:btn-md"
               >
                 Start Voting
               </.button>
@@ -62,7 +66,7 @@
               <.button
                 phx-click="reveal-votes"
                 phx-value-force={"false"}
-                class="btn btn-primary "
+                class="btn btn-primary btn-sm sm:btn-md"
               >
                 Show Results
               </.button>
@@ -81,22 +85,50 @@
             </svg>
           </.button>
         <% end %>
+        <div class="ml-2">
+          <Layouts.theme_toggle />
+        </div>
       </div>
     </header>
 
     <!-- MAIN + ASIDE -->
-    <div class="flex flex-1 h-full overflow-hidden">
+    <div class="flex flex-1 h-full overflow-hidden flex-col md:flex-row relative">
+      <!-- Puxador mobile -->
+      <%= if not @mobile_sidebar_open do %>
+          <button
+            type="button"
+            id="mobile-sidebar-handle"
+            class="fixed right-0 top-1/2 -translate-y-1/2 z-20 md:hidden bg-base-100 border border-base-300 border-r-0 rounded-l-full px-2 py-3 shadow-lg flex flex-col items-center gap-1 touch-none"
+          >
+
+          <span class="text-[10px] font-medium tracking-wide rotate-90">
+            Stories
+          </span>
+          <span class="badge badge-xs mt-1">
+            {length(@room.stories)}
+          </span>
+        </button>
+      <% end %>
+
+      <!-- Backdrop mobile -->
+      <div
+        :if={@mobile_sidebar_open}
+        id="mobile-sidebar-overlay"
+        phx-click="toggle-mobile-sidebar"
+        class="fixed inset-0 bg-black/40 z-20 md:hidden"
+      ></div>
+
       <!-- MAIN CONTENT -->
-      <section class="flex flex-1 overflow-hidden">
+      <section class="flex flex-1 overflow-y-auto md:overflow-hidden">
         <!-- TABLE / RESULTS -->
-        <div class="flex-1 flex flex-col p-6 gap-4">
+        <div class="flex-1 flex flex-col p-4 sm:p-6 gap-4">
           <div class="flex-1 flex items-center justify-center">
             <!-- When revealed, show results -->
             <%= if @room.state == :revealed and @room.results do %>
-              <div class="max-w-3xl w-full bg-base-100 border border-base-300 rounded-xl shadow-lg p-6 flex flex-col gap-6">
+              <div class="max-w-3xl w-full bg-base-100 border border-base-300 rounded-xl shadow-lg p-4 sm:p-6 flex flex-col gap-6">
                 <!-- TITLE -->
-                <h2 class="text-xl font-bold flex items-center gap-2">
-                  <span class="text-2xl">📊</span>
+                <h2 class="text-lg sm:text-xl font-bold flex items-center gap-2">
+                  <span class="text-xl sm:text-2xl">📊</span>
                   Voting Results
                 </h2>
 
@@ -107,8 +139,8 @@
                   </p>
 
                   <%= if story = @room.results.story do %>
-                    <p class="text-base font-semibold">{story.title}</p>
-                    <p class="text-sm text-base-content/70">{story.description}</p>
+                    <p class="text-base font-semibold truncate">{story.title}</p>
+                    <p class="text-sm text-base-content/70 break-words">{story.description}</p>
                   <% else %>
                     <p class="text-sm italic text-base-content/70">
                       No story selected.
@@ -129,9 +161,8 @@
                 <!-- PIE CHART + DISTRIBUTION -->
                 <div class="flex flex-col md:flex-row gap-6 items-center justify-center md:justify-start">
                   <!-- SVG PIE / DONUT -->
-                  <div class="relative w-40 h-40">
+                  <div class="relative w-32 h-32 sm:w-40 sm:h-40">
                     <svg viewBox="0 0 36 36" class="w-full h-full -rotate-90">
-                      <!-- base circle (background) -->
                       <circle
                         cx="18"
                         cy="18"
@@ -140,7 +171,6 @@
                         stroke="#E5E7EB"
                         stroke-width="4"
                       />
-                      <!-- segments -->
                       <%= for {seg, idx} <- Enum.with_index(pie_chart_segments(@room.results.vote_frequencies)) do %>
                         <circle
                           cx="18"
@@ -156,14 +186,14 @@
                       <% end %>
                     </svg>
                     <div class="absolute inset-0 flex items-center justify-center">
-                      <span class="text-lg font-bold">
+                      <span class="text-sm sm:text-lg font-bold">
                         {total_votes(@room)} votes
                       </span>
                     </div>
                   </div>
 
                   <!-- VOTE FREQUENCIES LIST -->
-                  <div>
+                  <div class="w-full md:w-auto">
                     <p class="text-xs uppercase tracking-wide text-base-content/60 mb-2">
                       Vote Distribution
                     </p>
@@ -175,13 +205,13 @@
                             phx-click="highlight-vote"
                             phx-value-vote={vote}
                             class={[
-                              "cursor-pointer px-3 py-2 rounded-md border flex items-center justify-between gap-3 transition-all",
+                              "cursor-pointer px-3 py-2 rounded-md border flex items-center justify-between gap-3 transition-all text-sm",
                               @room.highlighted_vote == vote && "border-primary bg-primary/10",
                               @room.highlighted_vote != vote && "border-base-300 hover:bg-base-200"
                             ]}
                           >
                             <span class="font-mono">{vote}</span>
-                            <span class="text-sm opacity-70">x{count}</span>
+                            <span class="text-xs sm:text-sm opacity-70">x{count}</span>
                           </div>
                         <% end %>
                       <% end %>
@@ -189,35 +219,34 @@
                   </div>
                 </div>
 
-              <!-- ALWAYS SHOW INDIVIDUAL VOTES -->
-              <div class="mt-4">
-                <p class="text-xs uppercase tracking-wide text-base-content/60 mb-2">
-                  Individual Votes
-                </p>
+                <!-- ALWAYS SHOW INDIVIDUAL VOTES -->
+                <div class="mt-4">
+                  <p class="text-xs uppercase tracking-wide text-base-content/60 mb-2">
+                    Individual Votes
+                  </p>
 
-                <%= if votes_for_display(@room) == [] do %>
-                  <p class="text-sm text-base-content/70 italic">No votes yet.</p>
-                <% else %>
-                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <%= for %{name: name, vote: vote, user: token} <- votes_for_display(@room) do %>
-                      <div class={[
-                        "flex items-center gap-3 border rounded-lg p-2 transition",
-                        @room.highlighted_vote == vote && "border-primary bg-primary/10"
-                      ]}>
-                        <img
-                          src={format_icon_url(icon_for_user(@room, token))}
-                          class="w-10 h-10 rounded-full border border-base-300"
-                        />
-                        <div class="flex flex-col">
-                          <span class="font-medium">{name}</span>
-                          <span class="font-mono text-sm text-base-content/70">Vote: {vote}</span>
+                  <%= if votes_for_display(@room) == [] do %>
+                    <p class="text-sm text-base-content/70 italic">No votes yet.</p>
+                  <% else %>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <%= for %{name: name, vote: vote, user: token} <- votes_for_display(@room) do %>
+                        <div class={[
+                          "flex items-center gap-3 border rounded-lg p-2 transition text-sm",
+                          @room.highlighted_vote == vote && "border-primary bg-primary/10"
+                        ]}>
+                          <img
+                            src={format_icon_url(icon_for_user(@room, token))}
+                            class="w-10 h-10 rounded-full border border-base-300"
+                          />
+                          <div class="flex flex-col">
+                            <span class="font-medium truncate max-w-[140px] sm:max-w-none">{name}</span>
+                            <span class="font-mono text-xs sm:text-sm text-base-content/70">Vote: {vote}</span>
+                          </div>
                         </div>
-                      </div>
-                    <% end %>
-                  </div>
-                <% end %>
-              </div>
-
+                      <% end %>
+                    </div>
+                  <% end %>
+                </div>
 
                 <!-- ACTION BUTTONS -->
                 <div class="mt-4 flex flex-wrap gap-2 justify-end">
@@ -250,20 +279,20 @@
               </div>
             <% else %>
               <!-- ROUND TABLE -->
-              <div class="relative w-full max-w-4xl h-full bg-base-100 border border-base-300 rounded-2xl shadow-lg overflow-hidden">
+              <div class="relative w-full max-w-4xl h-full min-h-[260px] bg-base-100 border border-base-300 rounded-2xl shadow-lg overflow-hidden">
                 <!-- Central "Table" -->
                 <div class="absolute inset-1/4 rounded-full bg-base-200 border border-base-300 flex items-center justify-center overflow-hidden">
-                  <div class="text-center px-6 min-w-0 w-full">
-                    <p class="text-xs uppercase tracking-wide text-base-content/60 mb-1">
+                  <div class="text-center px-4 sm:px-6 min-w-0 w-full">
+                    <p class="text-[10px] sm:text-xs uppercase tracking-wide text-base-content/60 mb-1">
                       Current Story
                     </p>
 
                     <%= if story = current_story(@room) do %>
-                      <p class="font-semibold text-sm mb-1 truncate">
+                      <p class="font-semibold text-xs sm:text-sm mb-1 truncate">
                         {story.title}
                       </p>
 
-                      <p class="text-xs text-base-content/70 line-clamp-2">
+                      <p class="text-[11px] sm:text-xs text-base-content/70 line-clamp-2 break-words">
                         {story.description}
                       </p>
                     <% else %>
@@ -282,19 +311,17 @@
                       class="absolute -translate-x-1/2 -translate-y-1/2"
                     >
                       <div class="group relative flex flex-col items-center gap-1">
-                        <!-- Name above avatar -->
                         <span
-                          class="text-[11px] max-w-[90px] truncate text-base-content/80 text-center"
+                          class="text-[10px] sm:text-[11px] max-w-[72px] sm:max-w-[90px] truncate text-base-content/80 text-center"
                           title={user.name || "Unknown"}
                         >
                           {user.name || "Anonymous"}
                         </span>
 
-                        <!-- Avatar -->
                         <div
                           id={"avatar-#{user.user}"}
                           class={[
-                            "w-12 h-12 rounded-full border-2 flex items-center justify-center text-sm font-semibold transition-all",
+                            "w-10 h-10 sm:w-12 sm:h-12 rounded-full border-2 flex items-center justify-center text-sm font-semibold transition-all",
                             user.voted? && "border-success shadow-md",
                             !user.voted? && "border-base-300 bg-base-200",
                             user.user == @user_token && "ring-2 ring-primary ring-offset-2 ring-offset-base-100"
@@ -304,15 +331,13 @@
                           <img
                             src={format_icon_url(user.icon)}
                             alt="Profile Icon"
-                            class="w-8 h-8 rounded-full"
+                            class="w-7 h-7 sm:w-8 sm:h-8 rounded-full"
                           />
                         </div>
 
-                        <!-- Hover actions: only for OTHER users -->
                         <%= if user.user != @user_token do %>
                           <div class="pointer-events-none absolute -bottom-10 left-1/2 -translate-x-1/2 opacity-0 translate-y-1 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-150">
                             <div class="pointer-events-auto bg-base-100 border border-base-300 rounded-full shadow-lg px-2 py-1 flex items-center gap-1">
-                              <!-- Poke -->
                               <button
                                 type="button"
                                 phx-click="poke"
@@ -324,9 +349,7 @@
                                 😜
                               </button>
 
-                              <!-- The options below only appear if the VIEWER is host -->
                               <%= if User.is_host?(@room.users, @user_token) do %>
-                                <!-- Pass leadership -->
                                 <button
                                   type="button"
                                   phx-click="pass-leadership"
@@ -350,11 +373,22 @@
                     class="pointer-events-none absolute inset-0 z-20"
                   ></div>
                 </div>
+                <div class="absolute bottom-3 right-4 text-[10px] sm:text-xs text-base-content/70 bg-base-100/90 backdrop-blur rounded-full px-3 py-1 border border-base-200 flex items-center gap-1">
+                  <span class="hidden xs:inline">To see more tools, visit</span>
+                  <a
+                    href="https://augustosouza.dev"
+                    class="link link-primary text-[10px] sm:text-xs"
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    AugustoSouza.dev
+                  </a>
+                </div>
               </div>
             <% end %>
           </div>
 
-          <!-- Player's cards (bottom of the screen) -->
+          <!-- Player's cards -->
           <%= if @room.state == :voting and @room.cards != [] do %>
             <%= if current_user = Enum.find(@room.users, &(&1.user == @user_token)) do %>
               <div class="mt-2 flex flex-col gap-2">
@@ -388,32 +422,59 @@
       </section>
 
       <!-- SIDEBAR / STORIES -->
-      <aside class="w-80 border-l border-base-300 bg-base-100 flex flex-col h-full overflow-hidden">
-        <!-- Header stories (fixed) -->
-        <div class="px-4 py-3 border-b border-base-200 flex items-center justify-between shrink-0">
+      <aside
+        id="mobile-sidebar"
+        phx-hook="MobileSidebar"
+        data-mobile-open={@mobile_sidebar_open}
+        style={if @mobile_sidebar_open do
+          ""
+        else
+          "transform: translateX(100%);"
+        end}
+        class={[
+          "fixed inset-y-0 right-0 z-30 w-72 max-w-full bg-base-100 border-l border-base-300 shadow-xl",
+          "flex flex-col h-full overflow-hidden",
+          "transition-transform duration-200",
+          "md:static md:w-80 md:h-full md:shadow-none"
+        ]}
+      >
+
+        <!-- TOPO: header + contagem -->
+        <div class="px-4 py-3 border-b border-base-200 flex items-center justify-between gap-2 shrink-0">
           <div>
             <p class="text-xs uppercase tracking-wide text-base-content/60">Stories</p>
             <p class="text-sm font-semibold">Backlog for voting</p>
           </div>
-          <span class="badge badge-sm">{length(@room.stories)}</span>
+          <div class="flex items-center gap-2">
+            <span class="badge badge-sm">{length(@room.stories)}</span>
+            <button
+              type="button"
+              phx-click="toggle-mobile-sidebar"
+              class="btn btn-ghost btn-xs px-2 md:hidden"
+              aria-label="Close stories"
+            >
+              ✕
+            </button>
+          </div>
         </div>
 
+        <!-- TOPO: história sendo votada -->
         <%= if @room.current_story do %>
           <% voting_story = Enum.find(@room.stories, &(&1.id == @room.current_story)) %>
-          <div class="px-4 py-3 border-b border-base-300 bg-primary/5">
+          <div class="px-4 py-3 border-b border-base-300 bg-primary/5 shrink-0">
             <p class="text-xs uppercase tracking-wide text-base-content/60 mb-1">
               Voting Now
             </p>
-            <p class="font-medium " title={voting_story.title}>
+            <p class="font-medium truncate" title={voting_story.title}>
               {voting_story.title}
             </p>
-            <p class="text-[11px] text-base-content/70 ">
+            <p class="text-[11px] text-base-content/70 line-clamp-3 break-words">
               {voting_story.description}
             </p>
           </div>
         <% end %>
 
-        <!-- stories scroll area  -->
+        <!-- MEIO: lista de histórias com scroll -->
         <div class="flex-1 min-h-0 overflow-y-auto px-4 py-3 space-y-2">
           <%= if @room.stories == [] do %>
             <p class="text-sm text-base-content/70 italic">No stories yet.</p>
@@ -426,24 +487,34 @@
               ]}>
                 <div>
                   <p class="font-medium truncate" title={story.title}>{story.title}</p>
-                  <p class="text-[11px] text-base-content/70 line-clamp-2">{story.description}</p>
-                  <p class="text-xs text-base-content/70">Story Points: {story.story_points || "Not assigned"}</p>
+                  <p class="text-[11px] text-base-content/70 line-clamp-2 break-words">
+                    {story.description}
+                  </p>
+                  <p class="text-xs text-base-content/70">
+                    Story Points: {story.story_points || "Not assigned"}
+                  </p>
                 </div>
 
-                <div class="mt-1 flex items-center justify-between">
+                <div class="mt-1 flex items-center justify-between gap-2">
                   <div class="flex gap-1">
-                    <button phx-click="select-story" phx-value-story-id={story.id}
-                            class="btn btn-xs btn-outline">
+                    <button
+                      phx-click="select-story"
+                      phx-value-story-id={story.id}
+                      class="btn btn-xs btn-outline"
+                    >
                       Select
                     </button>
-                    <button phx-click="remove-story" phx-value-story-id={story.id}
-                            class="btn btn-xs btn-ghost text-error">
+                    <button
+                      phx-click="remove-story"
+                      phx-value-story-id={story.id}
+                      class="btn btn-xs btn-ghost text-error"
+                    >
                       Remove
                     </button>
                   </div>
 
                   <%= if story[:decisive_vote] do %>
-                    <span class="badge badge-ghost badge-xs">
+                    <span class="badge badge-ghost badge-xs whitespace-nowrap">
                       Final: {story.decisive_vote}
                     </span>
                   <% end %>
@@ -453,7 +524,7 @@
           <% end %>
         </div>
 
-        <!-- New story form  -->
+        <!-- FUNDO: formulário sempre visível -->
         <div class="px-4 py-3 border-t border-base-200 bg-base-200 shrink-0">
           <p class="text-xs uppercase tracking-wide text-base-content/60 mb-2">
             New story

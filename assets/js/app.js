@@ -26,6 +26,7 @@ import topbar from "../vendor/topbar"
 import { DealCards } from "./hooks/deal_card";
 import { CopyToClipboard } from "./hooks/copy_to_clipboard";
 import { PokeAnimationHook } from "./hooks/poke_animation_hook";
+import { MobileSidebar } from "./hooks/mobile_sidebar_hook";
 
 let Hooks = {}
 
@@ -33,6 +34,7 @@ let Hooks = {}
 Hooks.DealCards = DealCards;
 Hooks.CopyToClipboard = CopyToClipboard;  
 Hooks.PokeAnimationHook = PokeAnimationHook;
+Hooks.MobileSidebar = MobileSidebar;
 
 
 const csrfToken = document.querySelector("meta[name='csrf-token']").getAttribute("content")
