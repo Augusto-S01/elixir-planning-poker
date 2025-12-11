@@ -420,18 +420,23 @@ defmodule ElixirPlanningPoker.Room do
   end
 
   defp get_vote(state) do
-    temp = case state.highlighted_vote do
-      nil ->
-        Enum.max_by(state.results.vote_frequencies, fn {_v, c} -> c end)
-        |> elem(0)
-      hv -> hv
-    end
+    temp =
+      case state.highlighted_vote do
+        nil ->
+          state.results.vote_frequencies
+          |> Enum.max_by(fn {v, c} -> {c, not is_nil(v)} end)
+          |> elem(0)
+
+        hv ->
+          hv
+      end
 
     case temp do
       nil -> "?"
       v -> v
     end
   end
+
 
   defp calculate_results(room) do
     vote_frequencies =
